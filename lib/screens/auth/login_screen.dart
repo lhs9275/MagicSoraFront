@@ -63,54 +63,82 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// 인증 없이 화면 구조만 확인하고 싶을 때 데모 홈으로 바로 이동시킨다.
+  void _openPreview() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const DebateHomeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF5EFE6), Color(0xFFE6F0EA), Color(0xFFF9F4EC)],
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isSubmitting ? null : _handleLogin,
+            child: _isSubmitting
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('로그인 후 시작하기'),
           ),
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Card(
-                  elevation: 0,
-                  color: Colors.white.withValues(alpha: 0.92),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Form(
-                      key: _formKey,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Magic Sora',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF3182F6),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 52),
+                    Text(
+                      '로그인',
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        fontSize: 34,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '토론 기록과 개인 설정을 연결하기 위해 먼저 계정을 확인합니다.',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 36),
+                    // 화면을 과하게 장식하지 않고 입력 영역만 선명하게 드러낸다.
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE5E8EB)),
+                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Magic Sora',
-                            style: theme.textTheme.displaySmall,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            '여러 AI의 토론 과정을 통해 더 나은 결론을 선택하는 플랫폼입니다.',
-                            style: theme.textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 28),
-                          Text('로그인', style: theme.textTheme.headlineSmall),
-                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                             validator: _loginController.validateEmail,
                             decoration: const InputDecoration(
                               labelText: '이메일',
@@ -121,44 +149,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: true,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _handleLogin(),
                             validator: _loginController.validatePassword,
                             decoration: const InputDecoration(
                               labelText: '비밀번호',
                               hintText: '8자 이상 입력',
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isSubmitting ? null : _handleLogin,
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text('로그인 후 시작하기'),
-                            ),
-                          ),
                           const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF2F7F4),
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: const Text(
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
                               '현재는 인증 API 연결 전 단계이므로, 형식 검증이 통과되면 데모 홈으로 이동합니다.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF8B95A1),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton(
+                        onPressed: _openPreview,
+                        child: const Text('계정 없이 UI만 둘러보기'),
+                      ),
+                    ),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
             ),
