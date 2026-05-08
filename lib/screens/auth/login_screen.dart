@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../features/auth/controllers/login_controller.dart';
 import '../home/debate_home_screen.dart';
 
@@ -72,114 +73,311 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isSubmitting ? null : _handleLogin,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('로그인 후 시작하기'),
-          ),
-        ),
-      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Form(
               key: _formKey,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Magic Sora',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF3182F6),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 52),
+                    const _BrandHeader(),
+                    const SizedBox(height: 34),
                     Text(
                       '로그인',
-                      style: theme.textTheme.displaySmall?.copyWith(
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontSize: 34,
+                        letterSpacing: 0.4,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
-                      '토론 기록과 개인 설정을 연결하기 위해 먼저 계정을 확인합니다.',
-                      style: theme.textTheme.bodyLarge,
+                      '토론 기록과 개인 설정을 이어서 사용합니다.',
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    const SizedBox(height: 36),
-                    // 화면을 과하게 장식하지 않고 입력 영역만 선명하게 드러낸다.
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE5E8EB)),
+                    const SizedBox(height: 28),
+                    _LoginPanel(
+                      emailController: _emailController,
+                      passwordController: _passwordController,
+                      loginController: _loginController,
+                      onPasswordSubmitted: _handleLogin,
+                    ),
+                    const SizedBox(height: 18),
+                    _PrimaryLoginButton(
+                      isLoading: _isSubmitting,
+                      onPressed: _isSubmitting ? null : _handleLogin,
+                    ),
+                    const SizedBox(height: 14),
+                    Center(
+                      child: TextButton(
+                        onPressed: _openPreview,
+                        child: const Text('계정 없이 둘러보기'),
                       ),
-                      child: Column(
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const _BrandMark(),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Magic Sora',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(letterSpacing: 0.6),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Debate arena',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.primaryDark,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 58,
+      height: 58,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 5,
+            top: 7,
+            child: Transform.rotate(
+              angle: -0.16,
+              child: const _MiniCard(color: AppTheme.coral),
+            ),
+          ),
+          Positioned(
+            left: 13,
+            top: 2,
+            child: Transform.rotate(
+              angle: 0.1,
+              child: const _MiniCard(color: AppTheme.accentGold),
+            ),
+          ),
+          Positioned(
+            right: 3,
+            bottom: 1,
+            child: Transform.rotate(
+              angle: 0.22,
+              child: const _MiniCard(color: AppTheme.primaryTeal),
+            ),
+          ),
+          Positioned.fill(
+            child: Center(
+              child: Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.cream,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.primaryDark, width: 2),
+                ),
+                child: const Text(
+                  'S',
+                  style: TextStyle(
+                    color: AppTheme.primaryDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniCard extends StatelessWidget {
+  const _MiniCard({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 44,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.primaryDark, width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.22),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginPanel extends StatelessWidget {
+  const _LoginPanel({
+    required this.emailController,
+    required this.passwordController,
+    required this.loginController,
+    required this.onPasswordSubmitted,
+  });
+
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final LoginController loginController;
+  final VoidCallback onPasswordSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryTeal.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            validator: loginController.validateEmail,
+            decoration: const InputDecoration(
+              labelText: '이메일',
+              hintText: 'you@example.com',
+              prefixIcon: Icon(Icons.alternate_email_rounded),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: passwordController,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => onPasswordSubmitted(),
+            validator: loginController.validatePassword,
+            decoration: const InputDecoration(
+              labelText: '비밀번호',
+              hintText: '8자 이상 입력',
+              prefixIcon: Icon(Icons.lock_rounded),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryLoginButton extends StatelessWidget {
+  const _PrimaryLoginButton({required this.isLoading, required this.onPressed});
+
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null && !isLoading;
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 180),
+      opacity: isEnabled ? 1 : 0.72,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isEnabled ? AppTheme.accentGold : const Color(0xFFE7DFBF),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppTheme.accentDark, width: 2),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: AppTheme.accentGold.withValues(alpha: 0.36),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: isEnabled ? onPressed : null,
+            child: SizedBox(
+              height: 58,
+              child: Center(
+                child: isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: AppTheme.primaryDark,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            validator: _loginController.validateEmail,
-                            decoration: const InputDecoration(
-                              labelText: '이메일',
-                              hintText: 'you@example.com',
-                            ),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: AppTheme.primaryDark,
                           ),
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _handleLogin(),
-                            validator: _loginController.validatePassword,
-                            decoration: const InputDecoration(
-                              labelText: '비밀번호',
-                              hintText: '8자 이상 입력',
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '현재는 인증 API 연결 전 단계이므로, 형식 검증이 통과되면 데모 홈으로 이동합니다.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF8B95A1),
-                              ),
+                          SizedBox(width: 8),
+                          Text(
+                            '로그인 후 시작하기',
+                            style: TextStyle(
+                              color: AppTheme.primaryDark,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Center(
-                      child: TextButton(
-                        onPressed: _openPreview,
-                        child: const Text('계정 없이 UI만 둘러보기'),
-                      ),
-                    ),
-                    const SizedBox(height: 100),
-                  ],
-                ),
               ),
             ),
           ),
