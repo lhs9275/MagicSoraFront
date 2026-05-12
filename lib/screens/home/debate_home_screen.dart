@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../account/account_profile_screen.dart';
 
 /// 로그인 이후 도착하는 토론 게임 대시보드다.
 class DebateHomeScreen extends StatelessWidget {
@@ -199,7 +200,61 @@ class _HomeTopBar extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(width: 10),
+        const _ProfileDemoButton(),
       ],
+    );
+  }
+}
+
+class _ProfileDemoButton extends StatelessWidget {
+  const _ProfileDemoButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '계정 프로필',
+      child: Material(
+        color: AppTheme.cream,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AccountProfileScreen(),
+              ),
+            );
+          },
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.primaryDark, width: 2),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.account_circle_rounded,
+                  color: AppTheme.primaryDark,
+                  size: 20,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  '프로필',
+                  style: TextStyle(
+                    color: AppTheme.primaryDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
