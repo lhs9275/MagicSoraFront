@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/ocean_shell_widgets.dart';
 import '../account/account_profile_screen.dart';
+import 'final_score_screen.dart';
 
 /// 로그인 이후 도착하는 토론 게임 대시보드다.
 class DebateHomeScreen extends StatelessWidget {
@@ -10,7 +12,7 @@ class DebateHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
+      body: OceanShellBackground(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 780),
@@ -22,6 +24,19 @@ class DebateHomeScreen extends StatelessWidget {
                   const _HomeTopBar(),
                   const SizedBox(height: 18),
                   const _HeroScorePanel(),
+                  const SizedBox(height: 14),
+                  OceanPillButton(
+                    label: '최종 점수 보기',
+                    icon: Icons.emoji_events_rounded,
+                    backgroundColor: AppTheme.accentGold,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const FinalScoreScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 24),
                   const _SectionTitle(
                     icon: Icons.style_rounded,
@@ -163,7 +178,16 @@ class _HomeTopBar extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(Icons.style_rounded, color: AppTheme.primaryDark),
+          child: IconButton(
+            tooltip: '소라고동 화면으로 돌아가기',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppTheme.primaryDark,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(

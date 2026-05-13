@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// Flip7 문서의 레트로 게임 감성을 앱 전체에 입히는 기본 테마다.
+/// 바닷속 조개 파스텔 게임 감성을 앱 전체에 입히는 기본 테마다.
 class AppTheme {
   const AppTheme._();
 
-  static const primaryTeal = Color(0xFF2BA8A2);
-  static const primaryLight = Color(0xFF3CC4BD);
-  static const primaryDark = Color(0xFF1E8C86);
-  static const primaryBg = Color(0xFFE8F6F5);
-  static const accentGold = Color(0xFFFFD23F);
-  static const accentLight = Color(0xFFFFE47A);
-  static const accentDark = Color(0xFFE6B800);
-  static const coral = Color(0xFFEF6C4A);
-  static const coralLight = Color(0xFFFF8A6A);
-  static const coralDark = Color(0xFFD45233);
-  static const cream = Color(0xFFFFF8E7);
-  static const skyBlue = Color(0xFF5DADE2);
-  static const surfaceBase = Color(0xFFEFF8F7);
+  static const primaryTeal = Color(0xFF28B9B8);
+  static const primaryLight = Color(0xFF77E1D8);
+  static const primaryDark = Color(0xFF0E8B92);
+  static const primaryBg = Color(0xFFE2FBF8);
+  static const accentGold = Color(0xFFFFDF55);
+  static const accentLight = Color(0xFFFFF09A);
+  static const accentDark = Color(0xFFE9B91E);
+  static const coral = Color(0xFFFF7B8F);
+  static const coralLight = Color(0xFFFFA4BC);
+  static const coralDark = Color(0xFFE95678);
+  static const shellPink = Color(0xFFFF8FD2);
+  static const shellPurple = Color(0xFFB58BFF);
+  static const cream = Color(0xFFFFFAE8);
+  static const skyBlue = Color(0xFF68CFF4);
+  static const surfaceBase = Color(0xFFE8FAF7);
   static const surfaceCard = Color(0xFFFFFFFF);
   static const success = Color(0xFF27AE60);
   static const error = Color(0xFFE74C3C);
@@ -37,14 +39,14 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: surfaceBase,
+      scaffoldBackgroundColor: primaryBg,
       fontFamilyFallback: const [
         'Apple SD Gothic Neo',
         'Noto Sans KR',
         'Roboto',
       ],
       appBarTheme: const AppBarTheme(
-        backgroundColor: surfaceBase,
+        backgroundColor: Colors.transparent,
         foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -66,23 +68,23 @@ class AppTheme {
           fontWeight: FontWeight.w700,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: primaryTeal, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
