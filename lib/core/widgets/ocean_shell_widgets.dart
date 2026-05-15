@@ -40,7 +40,11 @@ class OceanShellBackground extends StatelessWidget {
           const Positioned(right: 22, bottom: 24, child: _Coral()),
           const Positioned(left: 96, top: 132, child: _StarCharm(size: 24)),
           const Positioned(right: 96, top: 168, child: _StarCharm(size: 18)),
-          const Positioned(right: 42, bottom: 178, child: _ShellCharm(size: 52)),
+          const Positioned(
+            right: 42,
+            bottom: 178,
+            child: _ShellCharm(size: 52),
+          ),
           Positioned.fill(child: content),
         ],
       ),
@@ -71,7 +75,10 @@ class OceanPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? Colors.white.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.86), width: 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.86),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryDark.withValues(alpha: 0.14),
@@ -190,6 +197,9 @@ class ShellTextField extends StatelessWidget {
     required this.controller,
     required this.labelText,
     super.key,
+    this.autofillHints,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
     this.hintText,
     this.icon,
     this.validator,
@@ -201,6 +211,9 @@ class ShellTextField extends StatelessWidget {
 
   final TextEditingController controller;
   final String labelText;
+  final Iterable<String>? autofillHints;
+  final bool autocorrect;
+  final bool enableSuggestions;
   final String? hintText;
   final IconData? icon;
   final FormFieldValidator<String>? validator;
@@ -218,6 +231,9 @@ class ShellTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
+      autofillHints: autofillHints,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
@@ -280,10 +296,7 @@ class _ShellCharm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: CustomPaint(
-        size: Size.square(size),
-        painter: _ShellPainter(),
-      ),
+      child: CustomPaint(size: Size.square(size), painter: _ShellPainter()),
     );
   }
 }
@@ -302,10 +315,30 @@ class _ShellPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(size.width * 0.16, size.height * 0.66)
-      ..quadraticBezierTo(size.width * 0.18, 0, size.width * 0.5, size.height * 0.12)
-      ..quadraticBezierTo(size.width * 0.82, 0, size.width * 0.84, size.height * 0.66)
-      ..quadraticBezierTo(size.width * 0.68, size.height * 0.9, size.width * 0.5, size.height * 0.88)
-      ..quadraticBezierTo(size.width * 0.32, size.height * 0.9, size.width * 0.16, size.height * 0.66)
+      ..quadraticBezierTo(
+        size.width * 0.18,
+        0,
+        size.width * 0.5,
+        size.height * 0.12,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.82,
+        0,
+        size.width * 0.84,
+        size.height * 0.66,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.68,
+        size.height * 0.9,
+        size.width * 0.5,
+        size.height * 0.88,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.32,
+        size.height * 0.9,
+        size.width * 0.16,
+        size.height * 0.66,
+      )
       ..close();
 
     canvas.drawPath(path, body);

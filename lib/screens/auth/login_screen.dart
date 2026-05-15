@@ -72,72 +72,106 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final horizontalPadding = width >= 720 ? 32.0 : 20.0;
+    final viewInsets = MediaQuery.viewInsetsOf(context);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: OceanShellBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              28,
-              horizontalPadding,
-              32,
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: OceanPanel(
-                padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const _LoginHeader(),
-                      const SizedBox(height: 26),
-                      ShellTextField(
-                        controller: _emailController,
-                        labelText: '이메일',
-                        hintText: 'you@example.com',
-                        icon: Icons.alternate_email_rounded,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: _loginController.validateEmail,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 430;
+            final horizontalPadding = constraints.maxWidth >= 720
+                ? 32.0
+                : constraints.maxWidth < 360
+                ? 16.0
+                : 20.0;
+            final topPadding = isCompact ? 14.0 : 28.0;
+            final bottomPadding = 24.0 + viewInsets.bottom;
+            final minHeight =
+                constraints.maxHeight - topPadding - bottomPadding;
+
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                topPadding,
+                horizontalPadding,
+                bottomPadding,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: minHeight > 0 ? minHeight : 0,
+                ),
+                child: Align(
+                  alignment: isCompact ? Alignment.topCenter : Alignment.center,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: OceanPanel(
+                      padding: EdgeInsets.fromLTRB(
+                        isCompact ? 18 : 22,
+                        isCompact ? 20 : 24,
+                        isCompact ? 18 : 22,
+                        22,
                       ),
-                      const SizedBox(height: 14),
-                      ShellTextField(
-                        controller: _passwordController,
-                        labelText: '비밀번호',
-                        hintText: '8자 이상 입력',
-                        icon: Icons.lock_rounded,
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _handleLogin(),
-                        validator: _loginController.validatePassword,
-                      ),
-                      const SizedBox(height: 24),
-                      OceanPillButton(
-                        label: '로그인으로 시작',
-                        icon: Icons.login_rounded,
-                        backgroundColor: AppTheme.shellPurple,
-                        isLoading: _isSubmitting,
-                        onPressed: _isSubmitting ? null : _handleLogin,
-                      ),
-                      const SizedBox(height: 12),
-                      Center(
-                        child: TextButton(
-                          onPressed: _openPreview,
-                          child: const Text('계정 없이 둘러보기'),
+                      child: Form(
+                        key: _formKey,
+                        child: AutofillGroup(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _LoginHeader(),
+                              const SizedBox(height: 24),
+                              ShellTextField(
+                                controller: _emailController,
+                                labelText: '이메일',
+                                hintText: 'you@example.com',
+                                icon: Icons.alternate_email_rounded,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [AutofillHints.email],
+                                autocorrect: false,
+                                validator: _loginController.validateEmail,
+                              ),
+                              const SizedBox(height: 14),
+                              ShellTextField(
+                                controller: _passwordController,
+                                labelText: '비밀번호',
+                                hintText: '8자 이상 입력',
+                                icon: Icons.lock_rounded,
+                                obscureText: true,
+                                textInputAction: TextInputAction.done,
+                                onFieldSubmitted: (_) => _handleLogin(),
+                                autofillHints: const [AutofillHints.password],
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                validator: _loginController.validatePassword,
+                              ),
+                              const SizedBox(height: 24),
+                              OceanPillButton(
+                                label: '로그인으로 시작',
+                                icon: Icons.login_rounded,
+                                backgroundColor: AppTheme.shellPurple,
+                                isLoading: _isSubmitting,
+                                onPressed: _isSubmitting ? null : _handleLogin,
+                              ),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: TextButton(
+                                  onPressed: _openPreview,
+                                  child: const Text('계정 없이 둘러보기'),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -149,11 +183,15 @@ class _LoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTight = constraints.maxWidth < 360;
+        final badgeSize = isTight ? 50.0 : 56.0;
+        final textAlign = isTight ? TextAlign.center : TextAlign.left;
+
+        final badge = Container(
+          width: badgeSize,
+          height: badgeSize,
           decoration: BoxDecoration(
             color: AppTheme.shellPurple,
             shape: BoxShape.circle,
@@ -167,22 +205,42 @@ class _LoginHeader extends StatelessWidget {
             ],
           ),
           child: const Icon(Icons.water_drop_rounded, color: Colors.white),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('로그인', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 4),
-              Text(
-                '토론 기록과 개인 설정을 이어서 사용합니다.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      ],
+        );
+
+        final title = Column(
+          crossAxisAlignment: isTight
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
+          children: [
+            Text(
+              '로그인',
+              textAlign: textAlign,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '토론 기록과 개인 설정을 이어서 사용합니다.',
+              textAlign: textAlign,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        );
+
+        if (isTight) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [badge, const SizedBox(height: 12), title],
+          );
+        }
+
+        return Row(
+          children: [
+            badge,
+            const SizedBox(width: 14),
+            Expanded(child: title),
+          ],
+        );
+      },
     );
   }
 }

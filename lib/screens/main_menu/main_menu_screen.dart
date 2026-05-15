@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ocean_shell_widgets.dart';
 import '../auth/login_screen.dart';
 import '../auth/sign_up_screen.dart';
@@ -8,19 +9,18 @@ import '../home/magic_conch_home_screen.dart';
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
 
-  static const _imageAsset = 'assets/images/magic_sora_main.png';
-  static const _designSize = Size(1735, 907);
+  static const _conchAsset = 'assets/images/magic_conch.png';
 
   void _openSignUp(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SignUpScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SignUpScreen()));
   }
 
   void _openLogin(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const LoginScreen()));
   }
 
   void _openGuest(BuildContext context) {
@@ -33,71 +33,165 @@ class MainMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: OceanShellBackground(
-        useSafeArea: false,
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: SizedBox(
-              width: _designSize.width,
-              height: _designSize.height,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(_imageAsset, fit: BoxFit.fill),
-                  _MenuHitArea(
-                    label: '회원가입',
-                    rect: const Rect.fromLTWH(796, 224, 726, 171),
-                    onTap: () => _openSignUp(context),
-                  ),
-                  _MenuHitArea(
-                    label: '로그인으로 사용',
-                    rect: const Rect.fromLTWH(796, 411, 726, 171),
-                    onTap: () => _openLogin(context),
-                  ),
-                  _MenuHitArea(
-                    label: '비로그인으로 사용',
-                    rect: const Rect.fromLTWH(802, 600, 720, 171),
-                    onTap: () => _openGuest(context),
-                  ),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 720;
+            final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 20.0;
+            final topPadding = isCompact ? 14.0 : 28.0;
+            const bottomPadding = 28.0;
+            final minHeight =
+                constraints.maxHeight - topPadding - bottomPadding;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                topPadding,
+                horizontalPadding,
+                bottomPadding,
               ),
-            ),
-          ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: minHeight > 0 ? minHeight : 0,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1120),
+                    child: isCompact
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _BrandBlock(isCompact: true),
+                              const SizedBox(height: 22),
+                              _AuthActionPanel(
+                                onSignUp: () => _openSignUp(context),
+                                onLogin: () => _openLogin(context),
+                                onGuest: () => _openGuest(context),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Expanded(
+                                child: _BrandBlock(isCompact: false),
+                              ),
+                              const SizedBox(width: 38),
+                              SizedBox(
+                                width: 440,
+                                child: _AuthActionPanel(
+                                  onSignUp: () => _openSignUp(context),
+                                  onLogin: () => _openLogin(context),
+                                  onGuest: () => _openGuest(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _MenuHitArea extends StatelessWidget {
-  const _MenuHitArea({
-    required this.label,
-    required this.rect,
-    required this.onTap,
-  });
+class _BrandBlock extends StatelessWidget {
+  const _BrandBlock({required this.isCompact});
 
-  final String label;
-  final Rect rect;
-  final VoidCallback onTap;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-      child: Semantics(
-        label: label,
-        button: true,
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(96),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(96),
-            onTap: onTap,
+    final textAlign = isCompact ? TextAlign.center : TextAlign.left;
+    final crossAxisAlignment = isCompact
+        ? CrossAxisAlignment.center
+        : CrossAxisAlignment.start;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Text(
+          'magic sora',
+          textAlign: textAlign,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: AppTheme.primaryDark,
+            fontSize: isCompact ? 42 : 58,
+            letterSpacing: 0,
           ),
         ),
+        const SizedBox(height: 8),
+        Text(
+          '질문하고, 토론하고, 기록하는 마법의 소라고동',
+          textAlign: textAlign,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        SizedBox(height: isCompact ? 16 : 28),
+        Align(
+          alignment: isCompact ? Alignment.center : Alignment.centerLeft,
+          child: SizedBox(
+            width: isCompact ? 270 : 500,
+            height: isCompact ? 196 : 360,
+            child: Image.asset(MainMenuScreen._conchAsset, fit: BoxFit.contain),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AuthActionPanel extends StatelessWidget {
+  const _AuthActionPanel({
+    required this.onSignUp,
+    required this.onLogin,
+    required this.onGuest,
+  });
+
+  final VoidCallback onSignUp;
+  final VoidCallback onLogin;
+  final VoidCallback onGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    return OceanPanel(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('시작하기', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 6),
+          Text(
+            '계정으로 기록을 저장하거나 바로 데모를 둘러보세요.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 22),
+          OceanPillButton(
+            label: '회원가입',
+            icon: Icons.star_rounded,
+            backgroundColor: AppTheme.shellPink,
+            onPressed: onSignUp,
+          ),
+          const SizedBox(height: 12),
+          OceanPillButton(
+            label: '로그인으로 사용',
+            icon: Icons.login_rounded,
+            backgroundColor: AppTheme.shellPurple,
+            onPressed: onLogin,
+          ),
+          const SizedBox(height: 12),
+          OceanPillButton(
+            label: '비로그인으로 사용',
+            icon: Icons.visibility_rounded,
+            backgroundColor: AppTheme.primaryLight,
+            onPressed: onGuest,
+          ),
+        ],
       ),
     );
   }
