@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ocean_shell_widgets.dart';
-import 'debate_home_screen.dart';
+import '../account/account_profile_screen.dart';
 import 'magic_conch_result_screen.dart';
 
 class MagicConchHomeScreen extends StatefulWidget {
@@ -39,9 +39,9 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
     );
   }
 
-  void _openDashboard() {
+  void _openAccount() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const DebateHomeScreen()),
+      MaterialPageRoute<void>(builder: (_) => const AccountProfileScreen()),
     );
   }
 
@@ -64,8 +64,14 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
                           children: [
                             SizedBox(
                               width: 280,
-                              child: _QuestionHistoryPanel(
-                                questions: _questionHistory,
+                              child: Column(
+                                children: [
+                                  _QuestionHistoryPanel(
+                                    questions: _questionHistory,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _AccountShortcut(onTap: _openAccount),
+                                ],
                               ),
                             ),
                             const SizedBox(width: 28),
@@ -73,7 +79,6 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
                               child: _ConchQuestionPanel(
                                 controller: _questionController,
                                 onPull: _openResult,
-                                onOpenDashboard: _openDashboard,
                               ),
                             ),
                           ],
@@ -85,8 +90,9 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
                             _ConchQuestionPanel(
                               controller: _questionController,
                               onPull: _openResult,
-                              onOpenDashboard: _openDashboard,
                             ),
+                            const SizedBox(height: 20),
+                            _AccountShortcut(onTap: _openAccount),
                           ],
                         ),
                 ),
@@ -159,12 +165,10 @@ class _ConchQuestionPanel extends StatelessWidget {
   const _ConchQuestionPanel({
     required this.controller,
     required this.onPull,
-    required this.onOpenDashboard,
   });
 
   final TextEditingController controller;
   final VoidCallback onPull;
-  final VoidCallback onOpenDashboard;
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +186,7 @@ class _ConchQuestionPanel extends StatelessWidget {
               textAlign: isCompact ? TextAlign.left : TextAlign.center,
             );
             final guide = Text(
-              '사용법 : 질문을 작성하고 줄을 당겨주세요!',
+              '사용법 : 질문을 작성하고 ENTER 또는 줄을 당겨주세요!',
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: isCompact ? TextAlign.left : TextAlign.right,
             );
@@ -244,24 +248,97 @@ class _ConchQuestionPanel extends StatelessWidget {
         const SizedBox(height: 24),
         OceanPanel(
           padding: const EdgeInsets.all(18),
-          child: TextField(
-            controller: controller,
-            minLines: 3,
-            maxLines: 6,
-            decoration: const InputDecoration(
-              hintText: '사용자가 질문을 입력할 공간',
-              prefixIcon: Icon(Icons.edit_note_rounded),
-            ),
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              TextField(
+                controller: controller,
+                minLines: 3,
+                maxLines: 5,
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => onPull(),
+                decoration: const InputDecoration(
+                  hintText: '사용자가 질문을 입력할 공간',
+                  prefixIcon: Icon(Icons.edit_note_rounded),
+                  contentPadding: EdgeInsets.fromLTRB(18, 16, 132, 76),
+                ),
+              ),
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: SizedBox(
+                  width: 116,
+                  child: OceanPillButton(
+                    label: 'ENTER',
+                    backgroundColor: AppTheme.shellPink,
+                    onPressed: onPull,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 14),
-        OceanPillButton(
-          label: '라운드 대시보드로 이동',
-          icon: Icons.dashboard_rounded,
-          backgroundColor: AppTheme.accentGold,
-          onPressed: onOpenDashboard,
-        ),
       ],
+    );
+  }
+}
+
+class _AccountShortcut extends StatelessWidget {
+  const _AccountShortcut({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: onTap,
+        child: OceanPanel(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentGold,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                ),
+                child: const Icon(
+                  Icons.account_circle_rounded,
+                  color: AppTheme.primaryDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '내 계정 상세정보',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Sora Demo',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.primaryDark,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
