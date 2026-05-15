@@ -8,6 +8,8 @@ import 'magic_conch_result_screen.dart';
 class MagicConchHomeScreen extends StatefulWidget {
   const MagicConchHomeScreen({super.key});
 
+  static const designSize = Size(1180, 760);
+
   @override
   State<MagicConchHomeScreen> createState() => _MagicConchHomeScreenState();
 }
@@ -51,50 +53,43 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
       body: OceanShellBackground(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 900;
-
             return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1180),
-                  child: isWide
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 280,
-                              child: Column(
-                                children: [
-                                  _QuestionHistoryPanel(
-                                    questions: _questionHistory,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _AccountShortcut(onTap: _openAccount),
-                                ],
-                              ),
+              child: SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: MagicConchHomeScreen.designSize.width,
+                    height: MagicConchHomeScreen.designSize.height,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 280,
+                            child: Column(
+                              children: [
+                                _QuestionHistoryPanel(
+                                  questions: _questionHistory,
+                                ),
+                                const Spacer(),
+                                _AccountShortcut(onTap: _openAccount),
+                              ],
                             ),
-                            const SizedBox(width: 28),
-                            Expanded(
-                              child: _ConchQuestionPanel(
-                                controller: _questionController,
-                                onPull: _openResult,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            _QuestionHistoryPanel(questions: _questionHistory),
-                            const SizedBox(height: 20),
-                            _ConchQuestionPanel(
+                          ),
+                          const SizedBox(width: 28),
+                          Expanded(
+                            child: _ConchQuestionPanel(
                               controller: _questionController,
                               onPull: _openResult,
                             ),
-                            const SizedBox(height: 20),
-                            _AccountShortcut(onTap: _openAccount),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -174,76 +169,50 @@ class _ConchQuestionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 620;
-            final title = Text(
-              '마법의 소라고동!',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: AppTheme.primaryDark,
-                    fontSize: isCompact ? 30 : 34,
-                  ),
-              textAlign: isCompact ? TextAlign.left : TextAlign.center,
-            );
-            final guide = Text(
-              '사용법 : 질문을 작성하고 ENTER 또는 줄을 당겨주세요!',
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: isCompact ? TextAlign.left : TextAlign.right,
-            );
-
-            if (isCompact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  title,
-                  const SizedBox(height: 10),
-                  guide,
-                ],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Center(child: title)),
-                const SizedBox(width: 16),
-                Flexible(child: guide),
-              ],
-            );
-          },
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Center(
+                child: Text(
+                  '마법의 소라고동!',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: AppTheme.primaryDark,
+                        fontSize: 34,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 280,
+              child: Text(
+                '사용법 : 질문을 작성하고 ENTER 또는 줄을 당겨주세요!',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 620;
-
-            if (isCompact) {
-              return Column(
-                children: [
-                  _InteractiveConch(height: 300, onPull: onPull),
-                ],
-              );
-            }
-
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  flex: 5,
-                  child: _InteractiveConch(height: 390, onPull: onPull),
-                ),
-                const SizedBox(width: 18),
-                Flexible(
-                  flex: 4,
-                  child: Text(
-                    '소라고동에 달린 고리를 오른쪽으로 잡아당기면 다음 창으로 넘어갑니다.',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            );
-          },
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              flex: 5,
+              child: _InteractiveConch(height: 390, onPull: onPull),
+            ),
+            const SizedBox(width: 18),
+            SizedBox(
+              width: 260,
+              child: Text(
+                '소라고동에 달린 고리를 오른쪽으로 잡아당기면 다음 창으로 넘어갑니다.',
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
         OceanPanel(
