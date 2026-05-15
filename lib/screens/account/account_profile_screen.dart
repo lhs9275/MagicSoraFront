@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../auth/login_screen.dart';
+import '../../core/widgets/ocean_shell_widgets.dart';
+import '../main_menu/main_menu_screen.dart';
 
 /// 데모 세션의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
 class AccountProfileScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class AccountProfileScreen extends StatelessWidget {
 
   void _handleLogout(BuildContext context) {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      MaterialPageRoute<void>(builder: (_) => const MainMenuScreen()),
       (route) => false,
     );
   }
@@ -23,7 +24,7 @@ class AccountProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
+      body: OceanShellBackground(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
