@@ -102,7 +102,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   minHeight: minHeight > 0 ? minHeight : 0,
                 ),
                 child: Align(
-                  alignment: isCompact ? Alignment.topCenter : Alignment.center,
+                  alignment: Alignment.center,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: OceanPanel(
@@ -250,9 +250,12 @@ class _SignUpHeader extends StatelessWidget {
         );
 
         if (isTight) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [badge, const SizedBox(height: 12), title],
+          return SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [badge, const SizedBox(height: 12), title],
+            ),
           );
         }
 

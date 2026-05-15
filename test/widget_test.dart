@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:magicsorafront/app/app.dart';
 
@@ -50,6 +51,7 @@ void main() {
 
       expect(find.text('로그인'), findsOneWidget);
       expect(find.text('로그인으로 시작'), findsOneWidget);
+      expect(tester.getRect(find.byType(OceanPanel)).top, greaterThan(60));
       expect(tester.takeException(), isNull, reason: '로그인 화면 폭 $width');
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -78,14 +80,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('마법의 소라고동!'), findsOneWidget);
-    await tester.ensureVisible(find.text('라운드 대시보드로 이동'));
-    await tester.tap(find.text('라운드 대시보드로 이동'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Magic Sora'), findsOneWidget);
-    expect(find.text('프로필'), findsOneWidget);
-
-    await tester.tap(find.text('프로필'));
+    await tester.ensureVisible(find.text('내 계정 상세정보'));
+    await tester.tap(find.text('내 계정 상세정보'));
     await tester.pumpAndSettle();
 
     expect(find.text('계정'), findsOneWidget);
