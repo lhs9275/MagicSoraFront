@@ -9,8 +9,6 @@ import '../home/magic_conch_home_screen.dart';
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
 
-  static const _conchAsset = 'assets/images/magic_conch.png';
-
   void _openSignUp(BuildContext context) {
     Navigator.of(
       context,
@@ -35,9 +33,8 @@ class MainMenuScreen extends StatelessWidget {
       body: OceanShellBackground(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 720;
             final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 20.0;
-            final topPadding = isCompact ? 14.0 : 28.0;
+            const topPadding = 28.0;
             const bottomPadding = 28.0;
             final minHeight =
                 constraints.maxHeight - topPadding - bottomPadding;
@@ -55,37 +52,19 @@ class MainMenuScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1120),
-                    child: isCompact
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const _BrandBlock(isCompact: true),
-                              const SizedBox(height: 22),
-                              _AuthActionPanel(
-                                onSignUp: () => _openSignUp(context),
-                                onLogin: () => _openLogin(context),
-                                onGuest: () => _openGuest(context),
-                              ),
-                            ],
-                          )
-                        : Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Expanded(
-                                child: _BrandBlock(isCompact: false),
-                              ),
-                              const SizedBox(width: 38),
-                              SizedBox(
-                                width: 440,
-                                child: _AuthActionPanel(
-                                  onSignUp: () => _openSignUp(context),
-                                  onLogin: () => _openLogin(context),
-                                  onGuest: () => _openGuest(context),
-                                ),
-                              ),
-                            ],
-                          ),
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _BrandBlock(),
+                        const SizedBox(height: 26),
+                        _AuthActionPanel(
+                          onSignUp: () => _openSignUp(context),
+                          onLogin: () => _openLogin(context),
+                          onGuest: () => _openGuest(context),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -98,46 +77,29 @@ class MainMenuScreen extends StatelessWidget {
 }
 
 class _BrandBlock extends StatelessWidget {
-  const _BrandBlock({required this.isCompact});
-
-  final bool isCompact;
+  const _BrandBlock();
 
   @override
   Widget build(BuildContext context) {
-    final textAlign = isCompact ? TextAlign.center : TextAlign.left;
-    final crossAxisAlignment = isCompact
-        ? CrossAxisAlignment.center
-        : CrossAxisAlignment.start;
-
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: crossAxisAlignment,
       children: [
         Text(
           'magic sora',
-          textAlign: textAlign,
+          textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
             color: AppTheme.primaryDark,
-            fontSize: isCompact ? 42 : 58,
+            fontSize: 48,
             letterSpacing: 0,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           '질문하고, 토론하고, 기록하는 마법의 소라고동',
-          textAlign: textAlign,
+          textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: AppTheme.textPrimary,
             fontWeight: FontWeight.w800,
-          ),
-        ),
-        SizedBox(height: isCompact ? 16 : 28),
-        Align(
-          alignment: isCompact ? Alignment.center : Alignment.centerLeft,
-          child: SizedBox(
-            width: isCompact ? 270 : 500,
-            height: isCompact ? 196 : 360,
-            child: Image.asset(MainMenuScreen._conchAsset, fit: BoxFit.contain),
           ),
         ),
       ],
@@ -161,13 +123,18 @@ class _AuthActionPanel extends StatelessWidget {
     return OceanPanel(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('시작하기', style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            '시작하기',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 6),
           Text(
             '계정으로 기록을 저장하거나 바로 데모를 둘러보세요.',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 22),
