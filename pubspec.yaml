@@ -60,6 +60,7 @@ flutter:
   assets:
     - assets/images/magic_sora_main.png
     - assets/images/magic_conch.png
+    - lib/kakao_login_medium.png
     - lib/kakao_login_medium_wide.png
 
   # To add assets to your application, add an assets section, like this:

@@ -199,17 +199,7 @@ class _LoginHeader extends StatelessWidget {
                 height: conchSize * 0.72,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 10),
-              Text(
-                'magic sora',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppTheme.primaryDark,
-                  fontSize: 21,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               Text(
                 '로그인',
                 textAlign: TextAlign.center,

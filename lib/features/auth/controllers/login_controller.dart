@@ -2,6 +2,17 @@ import '../models/login_result.dart';
 
 /// 로그인 화면에서 사용하는 입력 검증과 임시 인증 흐름을 담당한다.
 class LoginController {
+  /// 아이디 입력값이 비어 있는지 확인한다.
+  String? validateIdentifier(String? value) {
+    final identifier = value?.trim() ?? '';
+
+    if (identifier.isEmpty) {
+      return '아이디를 입력해주세요.';
+    }
+
+    return null;
+  }
+
   /// 이메일 형식이 최소한 맞는지 확인한다.
   String? validateEmail(String? value) {
     final email = value?.trim() ?? '';

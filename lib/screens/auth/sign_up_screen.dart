@@ -242,7 +242,7 @@ class _SignUpHeader extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Magic Sora 계정을 만들어 이어서 이용해요.',
+              '계정을 만들어 기록을 이어서 이용해요.',
               textAlign: textAlign,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
