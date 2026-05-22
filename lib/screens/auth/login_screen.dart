@@ -186,62 +186,45 @@ class _LoginHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTight = constraints.maxWidth < 360;
-        final badgeSize = isTight ? 50.0 : 56.0;
-        final textAlign = isTight ? TextAlign.center : TextAlign.left;
+        final conchSize = isTight ? 92.0 : 116.0;
 
-        final badge = Container(
-          width: badgeSize,
-          height: badgeSize,
-          decoration: BoxDecoration(
-            color: AppTheme.shellPurple,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.shellPurple.withValues(alpha: 0.32),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+        return SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/magic_conch.png',
+                width: conchSize,
+                height: conchSize * 0.72,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'magic sora',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppTheme.primaryDark,
+                  fontSize: 21,
+                  letterSpacing: 0,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '로그인',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineSmall?.copyWith(letterSpacing: 0),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '토론 기록과 개인 설정을 이어서 사용합니다.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
-          child: const Icon(Icons.water_drop_rounded, color: Colors.white),
-        );
-
-        final title = Column(
-          crossAxisAlignment: isTight
-              ? CrossAxisAlignment.center
-              : CrossAxisAlignment.start,
-          children: [
-            Text(
-              '로그인',
-              textAlign: textAlign,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '토론 기록과 개인 설정을 이어서 사용합니다.',
-              textAlign: textAlign,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        );
-
-        if (isTight) {
-          return SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [badge, const SizedBox(height: 12), title],
-            ),
-          );
-        }
-
-        return Row(
-          children: [
-            badge,
-            const SizedBox(width: 14),
-            Expanded(child: title),
-          ],
         );
       },
     );
