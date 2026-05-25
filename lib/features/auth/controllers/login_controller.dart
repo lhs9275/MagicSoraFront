@@ -1,4 +1,4 @@
-import '../models/login_result.dart';
+import 'package:magicsorafront/features/auth/models/login_result.dart';
 
 /// 로그인 화면에서 사용하는 입력 검증과 임시 인증 흐름을 담당한다.
 class LoginController {

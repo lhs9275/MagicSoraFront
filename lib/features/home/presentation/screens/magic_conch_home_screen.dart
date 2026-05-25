@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../../layouts/desktop_home_layout.dart';
-import '../../layouts/mobile_home_layout.dart';
-import '../account/account_profile_screen.dart';
-import 'magic_conch_result_screen.dart';
-import 'question_history_screen.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/account/presentation/screens/account_profile_screen.dart';
+import 'package:magicsorafront/features/home/presentation/layouts/desktop_home_layout.dart';
+import 'package:magicsorafront/features/home/presentation/layouts/mobile_home_layout.dart';
+import 'package:magicsorafront/features/home/presentation/screens/magic_conch_result_screen.dart';
+import 'package:magicsorafront/features/home/presentation/screens/question_history_screen.dart';
 
 class MagicConchHomeScreen extends StatefulWidget {
   const MagicConchHomeScreen({super.key});
@@ -58,6 +57,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: OceanShellBackground(
         child: LayoutBuilder(
           builder: (context, constraints) {

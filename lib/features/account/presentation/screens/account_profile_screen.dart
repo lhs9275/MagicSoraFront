@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../main_menu/main_menu_screen.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
 
 /// 데모 세션의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
 class AccountProfileScreen extends StatelessWidget {

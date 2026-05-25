@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// 바닷속 조개 파스텔 게임 감성을 앱 전체에 입히는 기본 테마다.
+/// 모던한 바다 톤과 조개 포인트 컬러를 앱 전체에 입히는 기본 테마다.
 class AppTheme {
   const AppTheme._();
 
   static const primaryTeal = Color(0xFF28B9B8);
   static const primaryLight = Color(0xFF77E1D8);
   static const primaryDark = Color(0xFF0E8B92);
-  static const primaryBg = Color(0xFFE2FBF8);
+  static const primaryBg = Color(0xFFF7FCFA);
   static const accentGold = Color(0xFFFFDF55);
   static const accentLight = Color(0xFFFFF09A);
   static const accentDark = Color(0xFFE9B91E);
@@ -18,7 +18,7 @@ class AppTheme {
   static const shellPurple = Color(0xFFB58BFF);
   static const cream = Color(0xFFFFFAE8);
   static const skyBlue = Color(0xFF68CFF4);
-  static const surfaceBase = Color(0xFFE8FAF7);
+  static const surfaceBase = Color(0xFFF1FAF7);
   static const surfaceCard = Color(0xFFFFFFFF);
   static const success = Color(0xFF27AE60);
   static const error = Color(0xFFE74C3C);

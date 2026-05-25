@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_theme.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
 
 class OceanShellBackground extends StatelessWidget {
   const OceanShellBackground({
@@ -19,32 +18,20 @@ class OceanShellBackground extends StatelessWidget {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment(-0.9, -1),
+          end: Alignment(0.88, 1),
           colors: [
-            Color(0xFFA5F1E3),
-            Color(0xFF78DCE9),
-            Color(0xFFBDEEF7),
-            Color(0xFFFFF3BD),
+            Color(0xFFF7FCFA),
+            Color(0xFFB8ECEB),
+            Color(0xFFE0F5E7),
+            Color(0xFFFFF2D6),
           ],
-          stops: [0, 0.38, 0.72, 1],
+          stops: [0, 0.34, 0.72, 1],
         ),
       ),
       child: Stack(
         children: [
-          const Positioned(left: 24, top: 42, child: _Bubble(size: 58)),
-          const Positioned(right: 34, top: 72, child: _Bubble(size: 34)),
-          const Positioned(left: 58, bottom: 84, child: _Bubble(size: 26)),
-          const Positioned(right: 84, bottom: 112, child: _Bubble(size: 46)),
-          const Positioned(left: 28, bottom: 28, child: _SeaWeed()),
-          const Positioned(right: 22, bottom: 24, child: _Coral()),
-          const Positioned(left: 96, top: 132, child: _StarCharm(size: 24)),
-          const Positioned(right: 96, top: 168, child: _StarCharm(size: 18)),
-          const Positioned(
-            right: 42,
-            bottom: 178,
-            child: _ShellCharm(size: 52),
-          ),
+          const Positioned.fill(child: _ModernOceanBackdrop()),
           Positioned.fill(child: content),
         ],
       ),
@@ -73,17 +60,22 @@ class OceanPanel extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(28),
+        color: color ?? Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.86),
-          width: 2,
+          color: Colors.white.withValues(alpha: 0.68),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryDark.withValues(alpha: 0.14),
-            blurRadius: 26,
-            offset: const Offset(0, 12),
+            color: AppTheme.primaryDark.withValues(alpha: 0.1),
+            blurRadius: 36,
+            offset: const Offset(0, 18),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.42),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -243,215 +235,176 @@ class ShellTextField extends StatelessWidget {
   }
 }
 
-class _Bubble extends StatelessWidget {
-  const _Bubble({required this.size});
-
-  final double size;
+class _ModernOceanBackdrop extends StatelessWidget {
+  const _ModernOceanBackdrop();
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.22),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-        ),
-      ),
+    return const IgnorePointer(
+      child: CustomPaint(painter: _OceanWashPainter()),
     );
   }
 }
 
-class _StarCharm extends StatelessWidget {
-  const _StarCharm({required this.size});
+class _OceanWashPainter extends CustomPainter {
+  const _OceanWashPainter();
 
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Icon(
-        Icons.star_rounded,
-        size: size,
-        color: AppTheme.accentGold.withValues(alpha: 0.9),
-        shadows: [
-          Shadow(
-            color: AppTheme.accentDark.withValues(alpha: 0.28),
-            offset: const Offset(1.5, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShellCharm extends StatelessWidget {
-  const _ShellCharm({required this.size});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: CustomPaint(size: Size.square(size), painter: _ShellPainter()),
-    );
-  }
-}
-
-class _ShellPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final body = Paint()
-      ..color = AppTheme.shellPink.withValues(alpha: 0.7)
-      ..style = PaintingStyle.fill;
-    final stroke = Paint()
-      ..color = Colors.white.withValues(alpha: 0.86)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
+    _paintTopLight(canvas, size);
+    _paintWaveBand(
+      canvas,
+      size,
+      y: size.height * 0.18,
+      bandHeight: size.height * 0.16,
+      amplitude: size.height * 0.035,
+      colors: [
+        Colors.white.withValues(alpha: 0.22),
+        const Color(0xFF7BD9D5).withValues(alpha: 0.16),
+      ],
+    );
+    _paintWaveBand(
+      canvas,
+      size,
+      y: size.height * 0.53,
+      bandHeight: size.height * 0.2,
+      amplitude: size.height * 0.045,
+      colors: [
+        Colors.white.withValues(alpha: 0.18),
+        const Color(0xFFFFDFAE).withValues(alpha: 0.22),
+      ],
+    );
+    _paintSurfaceLines(canvas, size);
+    _paintBottomHaze(canvas, size);
+  }
 
+  void _paintTopLight(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0x66FFFFFF), Color(0x1A86D9D7), Color(0x00FFFFFF)],
+        stops: [0, 0.42, 1],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, paint);
+  }
+
+  void _paintWaveBand(
+    Canvas canvas,
+    Size size, {
+    required double y,
+    required double bandHeight,
+    required double amplitude,
+    required List<Color> colors,
+  }) {
+    final width = size.width;
     final path = Path()
-      ..moveTo(size.width * 0.16, size.height * 0.66)
-      ..quadraticBezierTo(
-        size.width * 0.18,
+      ..moveTo(0, y)
+      ..cubicTo(
+        width * 0.18,
+        y - amplitude,
+        width * 0.35,
+        y + amplitude,
+        width * 0.55,
+        y,
+      )
+      ..cubicTo(
+        width * 0.72,
+        y - amplitude,
+        width * 0.86,
+        y + amplitude * 0.8,
+        width,
+        y - amplitude * 0.18,
+      )
+      ..lineTo(width, y + bandHeight)
+      ..cubicTo(
+        width * 0.78,
+        y + bandHeight + amplitude,
+        width * 0.62,
+        y + bandHeight - amplitude * 0.75,
+        width * 0.42,
+        y + bandHeight,
+      )
+      ..cubicTo(
+        width * 0.24,
+        y + bandHeight + amplitude,
+        width * 0.1,
+        y + bandHeight - amplitude * 0.35,
         0,
-        size.width * 0.5,
-        size.height * 0.12,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.82,
-        0,
-        size.width * 0.84,
-        size.height * 0.66,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.68,
-        size.height * 0.9,
-        size.width * 0.5,
-        size.height * 0.88,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.32,
-        size.height * 0.9,
-        size.width * 0.16,
-        size.height * 0.66,
+        y + bandHeight + amplitude * 0.65,
       )
       ..close();
 
-    canvas.drawPath(path, body);
-    canvas.drawPath(path, stroke);
-    for (final x in [0.32, 0.5, 0.68]) {
-      canvas.drawLine(
-        Offset(size.width * 0.5, size.height * 0.18),
-        Offset(size.width * x, size.height * 0.76),
-        stroke,
-      );
+    final paint = Paint()
+      ..shader =
+          LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
+          ).createShader(
+            Rect.fromLTWH(0, y - amplitude, width, bandHeight + amplitude * 2),
+          );
+
+    canvas.drawPath(path, paint);
+  }
+
+  void _paintSurfaceLines(Canvas canvas, Size size) {
+    final width = size.width;
+    final height = size.height;
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round;
+
+    for (var index = 0; index < 7; index += 1) {
+      final y = height * (0.1 + index * 0.105);
+      final shift = index.isEven ? height * 0.018 : -height * 0.014;
+      final path = Path()
+        ..moveTo(-width * 0.06, y)
+        ..cubicTo(
+          width * 0.14,
+          y + shift,
+          width * 0.28,
+          y - shift,
+          width * 0.44,
+          y + shift * 0.35,
+        )
+        ..cubicTo(
+          width * 0.62,
+          y + shift,
+          width * 0.78,
+          y - shift,
+          width * 1.06,
+          y + shift * 0.2,
+        );
+
+      canvas.drawPath(path, paint);
     }
+  }
+
+  void _paintBottomHaze(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      0,
+      size.height * 0.58,
+      size.width,
+      size.height * 0.42,
+    );
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: 0),
+          const Color(0xFFFFF0D4).withValues(alpha: 0.48),
+        ],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _SeaWeed extends StatelessWidget {
-  const _SeaWeed();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _WeedBlade(height: 82, color: AppTheme.primaryDark),
-          _WeedBlade(height: 58, color: AppTheme.primaryTeal),
-          _WeedBlade(height: 72, color: AppTheme.success),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeedBlade extends StatelessWidget {
-  const _WeedBlade({required this.height, required this.color});
-
-  final double height;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 14,
-      height: height,
-      margin: const EdgeInsets.only(right: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.48),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(999)),
-      ),
-    );
-  }
-}
-
-class _Coral extends StatelessWidget {
-  const _Coral();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: SizedBox(
-        width: 96,
-        height: 86,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            _CoralBranch(width: 26, height: 70, color: AppTheme.shellPink),
-            Positioned(
-              left: 16,
-              bottom: 0,
-              child: _CoralBranch(
-                width: 22,
-                height: 46,
-                color: AppTheme.coralLight,
-              ),
-            ),
-            Positioned(
-              right: 14,
-              bottom: 0,
-              child: _CoralBranch(
-                width: 24,
-                height: 62,
-                color: AppTheme.shellPurple,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CoralBranch extends StatelessWidget {
-  const _CoralBranch({
-    required this.width,
-    required this.height,
-    required this.color,
-  });
-
-  final double width;
-  final double height;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.68),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(999)),
-      ),
-    );
-  }
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../../features/auth/controllers/login_controller.dart';
-import '../home/magic_conch_home_screen.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
+import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
 /// 인증이 완료되면 토론 대시보드로 이동한다.
 class LoginScreen extends StatefulWidget {
@@ -194,7 +193,7 @@ class _LoginHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/magic_conch.png',
+                'assets/images/brand/magic_conch.png',
                 width: conchSize,
                 height: conchSize * 0.72,
                 fit: BoxFit.contain,

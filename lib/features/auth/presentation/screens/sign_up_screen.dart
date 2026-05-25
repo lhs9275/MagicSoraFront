@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../../features/auth/controllers/sign_up_controller.dart';
-import 'login_screen.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/controllers/sign_up_controller.dart';
+import 'package:magicsorafront/features/auth/presentation/screens/login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../core/theme/app_theme.dart';
-import '../core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 
 class QuestionHistoryPanel extends StatelessWidget {
   const QuestionHistoryPanel({required this.questions, super.key});
@@ -122,66 +121,37 @@ class AccountShortcut extends StatelessWidget {
 }
 
 class ConchQuestionPanel extends StatelessWidget {
-  const ConchQuestionPanel({
-    required this.controller,
-    required this.onSubmit,
-    super.key,
-  });
+  const ConchQuestionPanel({required this.onSubmit, super.key});
 
-  final TextEditingController controller;
   final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Center(
-                child: Text(
-                  '마법의 소라고동!',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: AppTheme.primaryDark,
-                    fontSize: 34,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 280,
-              child: Text(
-                '사용법 : 질문을 작성하고 ENTER 또는 줄을 당겨주세요!',
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.right,
-              ),
-            ),
-          ],
+        Text(
+          '마법의 소라고동!',
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: AppTheme.primaryDark,
+            fontSize: 34,
+          ),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              flex: 5,
-              child: InteractiveConch(height: 390, onPull: onSubmit),
-            ),
-            const SizedBox(width: 18),
-            SizedBox(
-              width: 260,
-              child: Text(
-                '소라고동에 달린 고리를 오른쪽으로 잡아당기면 다음 창으로 넘어갑니다.',
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+        const SizedBox(height: 22),
+        Flexible(
+          child: Center(child: InteractiveConch(height: 390, onPull: onSubmit)),
         ),
-        const SizedBox(height: 24),
-        QuestionInputPanel(controller: controller, onSubmit: onSubmit),
+        const SizedBox(height: 18),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Text(
+            '질문을 쓰고 전송 버튼을 누르거나\n소라고동을 당겨보세요.',
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
   }
@@ -199,44 +169,93 @@ class QuestionInputPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OceanPanel(
-      padding: const EdgeInsets.all(18),
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          TextField(
-            controller: controller,
-            minLines: 3,
-            maxLines: 5,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => onSubmit(),
-            decoration: const InputDecoration(
-              hintText: '사용자가 질문을 입력할 공간',
-              prefixIcon: Icon(Icons.edit_note_rounded),
-              contentPadding: EdgeInsets.fromLTRB(18, 16, 132, 76),
-            ),
-          ),
-          Positioned(
-            right: 12,
-            bottom: 12,
-            child: SizedBox(
-              width: 116,
-              child: OceanPillButton(
-                label: 'ENTER',
-                backgroundColor: AppTheme.shellPink,
-                onPressed: onSubmit,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 420;
+
+        return OceanPanel(
+          padding: EdgeInsets.all(isCompact ? 8 : 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 52,
+                    maxHeight: 94,
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 3,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => onSubmit(),
+                    decoration: InputDecoration(
+                      hintText: '무엇이 궁금한가요?',
+                      prefixIcon: const Icon(Icons.edit_note_rounded, size: 22),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 42,
+                        minHeight: 42,
+                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(2, 15, 16, 15),
+                      filled: true,
+                      fillColor: AppTheme.cream.withValues(alpha: 0.9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: BorderSide(
+                          color: AppTheme.border.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: BorderSide(
+                          color: AppTheme.border.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: const BorderSide(
+                          color: AppTheme.primaryTeal,
+                          width: 1.6,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              SizedBox.square(
+                dimension: isCompact ? 48 : 52,
+                child: Material(
+                  color: AppTheme.shellPink,
+                  shape: const CircleBorder(),
+                  elevation: 0,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onSubmit,
+                    child: const Icon(
+                      Icons.send_rounded,
+                      color: AppTheme.textPrimary,
+                      size: 21,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class InteractiveConch extends StatefulWidget {
-  const InteractiveConch({required this.height, required this.onPull, super.key});
+  const InteractiveConch({
+    required this.height,
+    required this.onPull,
+    super.key,
+  });
 
   final double height;
   final VoidCallback onPull;
@@ -246,7 +265,7 @@ class InteractiveConch extends StatefulWidget {
 }
 
 class _InteractiveConchState extends State<InteractiveConch> {
-  static const _imageAspectRatio = 956 / 694;
+  static const _imageAspectRatio = 1546 / 1017;
   static const _pullThreshold = 54.0;
   static const _maxPullDistance = 92.0;
 
@@ -280,7 +299,9 @@ class _InteractiveConchState extends State<InteractiveConch> {
             ? constraints.maxWidth
             : widget.height * _imageAspectRatio + _maxPullDistance;
         final fittedHeight = (maxWidth - _maxPullDistance) / _imageAspectRatio;
-        final height = fittedHeight < widget.height ? fittedHeight : widget.height;
+        final height = fittedHeight < widget.height
+            ? fittedHeight
+            : widget.height;
         final width = height * _imageAspectRatio;
         final ringSize = height < 340 ? 54.0 : 66.0;
 
@@ -297,7 +318,7 @@ class _InteractiveConchState extends State<InteractiveConch> {
                   width: width,
                   height: height,
                   child: Image.asset(
-                    'assets/images/magic_conch.png',
+                    'assets/images/brand/magic_conch.png',
                     fit: BoxFit.contain,
                   ),
                 ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../../features/auth/controllers/login_controller.dart';
-import '../auth/sign_up_screen.dart';
-import '../home/magic_conch_home_screen.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
+import 'package:magicsorafront/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -91,7 +90,7 @@ class _BrandBlock extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
-              'assets/images/magic_conch.png',
+              'assets/images/brand/magic_conch.png',
               width: conchWidth,
               height: conchWidth * 0.72,
               fit: BoxFit.contain,
@@ -149,7 +148,7 @@ class _InlineLoginPanel extends StatefulWidget {
 }
 
 class _InlineLoginPanelState extends State<_InlineLoginPanel> {
-  static const _kakaoLoginAsset = 'lib/kakao_login_medium.png';
+  static const _kakaoLoginAsset = 'assets/images/auth/kakao_login_medium.png';
 
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();

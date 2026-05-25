@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 
 /// 최종 점수만 간단하게 보여주는 화면이다.
 class FinalScoreScreen extends StatelessWidget {

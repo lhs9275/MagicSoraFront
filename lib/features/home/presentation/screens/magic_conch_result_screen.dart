@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 
 class MagicConchResultScreen extends StatelessWidget {
   const MagicConchResultScreen({required this.question, super.key});
@@ -27,7 +26,7 @@ class MagicConchResultScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/images/magic_conch.png',
+                      'assets/images/brand/magic_conch.png',
                       height: 220,
                       fit: BoxFit.contain,
                     ),
@@ -42,10 +41,8 @@ class MagicConchResultScreen extends StatelessWidget {
                     const SizedBox(height: 22),
                     Text(
                       '마법의 소라고동이 곧 답을 들려줄 거예요.',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: AppTheme.primaryDark,
-                            fontSize: 24,
-                          ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(color: AppTheme.primaryDark, fontSize: 24),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/ocean_shell_widgets.dart';
-import '../../widgets/home_widgets.dart';
+import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.dart';
 
 class QuestionHistoryScreen extends StatelessWidget {
   const QuestionHistoryScreen({required this.questions, super.key});

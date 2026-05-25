@@ -1,4 +1,4 @@
-import '../models/sign_up_result.dart';
+import 'package:magicsorafront/features/auth/models/sign_up_result.dart';
 
 class SignUpController {
   String? validateEmail(String? value) {
