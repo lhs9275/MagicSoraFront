@@ -226,10 +226,49 @@ class _PlainQuestionHistoryList extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          if (question != questions.last) const SizedBox(height: 16),
+          if (question != questions.last) const _QuestionDivider(),
         ],
       ],
     );
+  }
+}
+
+class _QuestionDivider extends StatelessWidget {
+  const _QuestionDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 24,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _QuestionDividerPainter(
+          color: AppTheme.primaryDark.withValues(alpha: 0.24),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestionDividerPainter extends CustomPainter {
+  const _QuestionDividerPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+
+    final y = size.height / 2;
+    canvas.drawLine(Offset.zero.translate(0, y), Offset(size.width, y), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _QuestionDividerPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
