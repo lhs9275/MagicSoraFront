@@ -148,8 +148,6 @@ class _InlineLoginPanel extends StatefulWidget {
 }
 
 class _InlineLoginPanelState extends State<_InlineLoginPanel> {
-  static const _kakaoLoginAsset = 'assets/images/auth/kakao_login_medium.png';
-
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -246,25 +244,9 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
                 validator: _loginController.validatePassword,
               ),
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _KakaoLoginButton(
-                      assetPath: _kakaoLoginAsset,
-                      onPressed: _submitKakaoLogin,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OceanPillButton(
-                      label: '로그인',
-                      icon: Icons.login_rounded,
-                      backgroundColor: AppTheme.shellPurple,
-                      isLoading: _isSubmitting,
-                      onPressed: _isSubmitting ? null : _submitLogin,
-                    ),
-                  ),
-                ],
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 280),
+                child: _KakaoLoginButton(onPressed: _submitKakaoLogin),
               ),
               const SizedBox(height: 16),
               Wrap(
@@ -274,14 +256,6 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
                 runSpacing: 8,
                 children: [
                   _TextLink(label: '회원가입', onTap: widget.onSignUp),
-                  Text(
-                    '/',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  _TextLink(label: '비로그인으로 사용', onTap: widget.onGuest),
                 ],
               ),
             ],
@@ -293,26 +267,53 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
 }
 
 class _KakaoLoginButton extends StatelessWidget {
-  const _KakaoLoginButton({required this.assetPath, required this.onPressed});
+  const _KakaoLoginButton({required this.onPressed});
 
-  final String assetPath;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
+    const kakaoYellow = Color(0xFFFEE500);
+    const kakaoText = Color(0xFF191600);
+
     return Semantics(
       label: '카카오 로그인',
       button: true,
-      child: Material(
-        color: const Color(0xFFFEE500),
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: kakaoYellow,
           borderRadius: BorderRadius.circular(999),
-          onTap: onPressed,
-          child: SizedBox(
-            height: 58,
-            child: Center(
-              child: Image.asset(assetPath, height: 45, fit: BoxFit.contain),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onPressed,
+            child: SizedBox(
+              height: 58,
+              child: const Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_rounded,
+                      color: kakaoText,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '카카오 로그인',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: kakaoText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
