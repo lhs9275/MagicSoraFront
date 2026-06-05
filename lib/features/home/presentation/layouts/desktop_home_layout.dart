@@ -41,8 +41,12 @@ class DesktopHomeLayout extends StatelessWidget {
                             width: 280,
                             child: Column(
                               children: [
-                                QuestionHistoryPanel(questions: questions),
-                                const Spacer(),
+                                Expanded(
+                                  child: QuestionHistoryPanel(
+                                    questions: questions,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
                                 AccountShortcut(onTap: onOpenAccount),
                               ],
                             ),

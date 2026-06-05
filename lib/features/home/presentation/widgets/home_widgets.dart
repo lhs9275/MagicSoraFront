@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 
+const _historyRowText = AppTheme.textPrimary;
+const _historyRowSecondary = AppTheme.textSecondary;
+const _historyRow = Color(0xFFF2FBFA);
+const _historyDivider = Color(0xFFCFE8E5);
+
 class QuestionHistoryPanel extends StatelessWidget {
   const QuestionHistoryPanel({required this.questions, super.key});
 
@@ -14,15 +19,37 @@ class QuestionHistoryPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '내가 여태까지 질문했던 목록들',
-            style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '최근 질문',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _historyRowText,
+                    fontSize: 17,
+                  ),
+                ),
+              ),
+              Text(
+                '${questions.length}개',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: _historyRowSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          for (final question in questions) ...[
-            HistoryTile(question: question),
-            if (question != questions.last) const SizedBox(height: 10),
-          ],
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: questions.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                return HistoryTile(question: questions[index]);
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -38,24 +65,32 @@ class HistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: AppTheme.cream.withValues(alpha: 0.76),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryDark.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+        color: _historyRow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _historyDivider),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: AppTheme.primaryDark,
+            size: 17,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              question,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: _historyRowText,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
-      ),
-      child: Text(
-        question,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppTheme.textPrimary,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }
