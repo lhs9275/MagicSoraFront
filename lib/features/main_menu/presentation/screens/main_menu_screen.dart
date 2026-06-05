@@ -1,24 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
-import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
-import 'package:magicsorafront/features/auth/presentation/screens/sign_up_screen.dart';
-import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
-
-  void _openSignUp(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SignUpScreen()));
-  }
-
-  void _openGuest(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const MagicConchHomeScreen()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +37,7 @@ class MainMenuScreen extends StatelessWidget {
                       children: [
                         const _BrandBlock(),
                         const SizedBox(height: 22),
-                        _AuthActionPanel(
-                          onSignUp: () => _openSignUp(context),
-                          onLoginSuccess: () => _openGuest(context),
-                          onGuest: () => _openGuest(context),
-                        ),
+                        const _AuthActionPanel(),
                       ],
                     ),
                   ),
@@ -112,90 +93,22 @@ class _BrandBlock extends StatelessWidget {
 }
 
 class _AuthActionPanel extends StatelessWidget {
-  const _AuthActionPanel({
-    required this.onSignUp,
-    required this.onLoginSuccess,
-    required this.onGuest,
-  });
-
-  final VoidCallback onSignUp;
-  final VoidCallback onLoginSuccess;
-  final VoidCallback onGuest;
+  const _AuthActionPanel();
 
   @override
   Widget build(BuildContext context) {
-    return _InlineLoginPanel(
-      onSignUp: onSignUp,
-      onLoginSuccess: onLoginSuccess,
-      onGuest: onGuest,
-    );
+    return const _InlineLoginPanel();
   }
 }
 
 class _InlineLoginPanel extends StatefulWidget {
-  const _InlineLoginPanel({
-    required this.onSignUp,
-    required this.onLoginSuccess,
-    required this.onGuest,
-  });
-
-  final VoidCallback onSignUp;
-  final VoidCallback onLoginSuccess;
-  final VoidCallback onGuest;
+  const _InlineLoginPanel();
 
   @override
   State<_InlineLoginPanel> createState() => _InlineLoginPanelState();
 }
 
 class _InlineLoginPanelState extends State<_InlineLoginPanel> {
-  final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _loginController = LoginController();
-
-  bool _isSubmitting = false;
-
-  @override
-  void dispose() {
-    _identifierController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitLogin() async {
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (!isValid) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    final result = await _loginController.submitLogin(
-      email: _identifierController.text.trim(),
-      password: _passwordController.text,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(result.message)));
-
-    if (!result.isSuccess) {
-      return;
-    }
-
-    widget.onLoginSuccess();
-  }
-
   void _submitKakaoLogin() {
     ScaffoldMessenger.of(
       context,
@@ -206,61 +119,21 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
   Widget build(BuildContext context) {
     return OceanPanel(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-      child: Form(
-        key: _formKey,
-        child: AutofillGroup(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '시작하기',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 18),
-              ShellTextField(
-                controller: _identifierController,
-                labelText: '아이디',
-                hintText: '아이디 입력',
-                icon: Icons.person_rounded,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.username],
-                autocorrect: false,
-                validator: _loginController.validateIdentifier,
-              ),
-              const SizedBox(height: 12),
-              ShellTextField(
-                controller: _passwordController,
-                labelText: '비밀번호',
-                hintText: '8자 이상 입력',
-                icon: Icons.lock_rounded,
-                obscureText: true,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _submitLogin(),
-                autofillHints: const [AutofillHints.password],
-                autocorrect: false,
-                enableSuggestions: false,
-                validator: _loginController.validatePassword,
-              ),
-              const SizedBox(height: 18),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280),
-                child: _KakaoLoginButton(onPressed: _submitKakaoLogin),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 10,
-                runSpacing: 8,
-                children: [
-                  _TextLink(label: '회원가입', onTap: widget.onSignUp),
-                ],
-              ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '시작하기',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ),
+          const SizedBox(height: 20),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: _KakaoLoginButton(onPressed: _submitKakaoLogin),
+          ),
+        ],
       ),
     );
   }
@@ -322,33 +195,3 @@ class _KakaoLoginButton extends StatelessWidget {
   }
 }
 
-class _TextLink extends StatelessWidget {
-  const _TextLink({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.primaryDark,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
