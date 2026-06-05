@@ -93,6 +93,10 @@ class OceanPillButton extends StatelessWidget {
     this.backgroundColor = AppTheme.shellPink,
     this.foregroundColor = AppTheme.textPrimary,
     this.isLoading = false,
+    this.fontSize = 17,
+    this.showBorder = true,
+    this.showShadow = true,
+    this.useGradient = true,
   });
 
   final String label;
@@ -101,6 +105,10 @@ class OceanPillButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final bool isLoading;
+  final double fontSize;
+  final bool showBorder;
+  final bool showShadow;
+  final bool useGradient;
 
   @override
   Widget build(BuildContext context) {
@@ -113,28 +121,33 @@ class OceanPillButton extends StatelessWidget {
         width: double.infinity,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                backgroundColor.withValues(alpha: 0.96),
-                backgroundColor,
-              ],
-            ),
+            color: useGradient ? null : backgroundColor,
+            gradient: useGradient
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      backgroundColor.withValues(alpha: 0.96),
+                      backgroundColor,
+                    ],
+                  )
+                : null,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: backgroundColor.withValues(alpha: 0.34),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: AppTheme.primaryDark.withValues(alpha: 0.18),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: showBorder ? Border.all(color: Colors.white, width: 3) : null,
+            boxShadow: showShadow
+                ? [
+                    BoxShadow(
+                      color: backgroundColor.withValues(alpha: 0.34),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: AppTheme.primaryDark.withValues(alpha: 0.18),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Material(
             color: Colors.transparent,
@@ -167,7 +180,7 @@ class OceanPillButton extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: foregroundColor,
-                                  fontSize: 17,
+                                  fontSize: fontSize,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),

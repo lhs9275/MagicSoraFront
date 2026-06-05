@@ -3,6 +3,16 @@ import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/home/presentation/screens/evaluation_result_screen.dart';
 
+enum QuestionRequestMode {
+  newQuestion('new_question'),
+  followUp('follow_up'),
+  reEvaluate('re_evaluate');
+
+  const QuestionRequestMode(this.apiValue);
+
+  final String apiValue;
+}
+
 class MagicConchResultScreen extends StatefulWidget {
   const MagicConchResultScreen({required this.question, super.key});
 
@@ -27,8 +37,9 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   }
 
   Map<String, String> _buildFollowUpContext(String followUpQuestion) {
-    // TODO: 대화 이어가기 API 연결 시 이 context를 요청 body로 전달한다.
+    // TODO: API 요청 body로 전달하면 백엔드가 mode 값으로 처리 흐름을 구분할 수 있다.
     return {
+      'mode': QuestionRequestMode.followUp.apiValue,
       'originalQuestion': _trimmedQuestion,
       'currentAnswer': _buildTemporaryAnswer(),
       'followUpQuestion': followUpQuestion,
@@ -79,13 +90,12 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
     }
 
     final contextPayload = _buildFollowUpContext(followUpQuestion);
+    final mode = contextPayload['mode'] ?? QuestionRequestMode.followUp.apiValue;
     final followUpPreview = contextPayload['followUpQuestion'] ?? '';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          '추가 질문 기능은 API 연결 전입니다: $followUpPreview',
-        ),
+        content: Text('추가 질문 기능은 API 연결 전입니다. mode=$mode: $followUpPreview'),
       ),
     );
   }

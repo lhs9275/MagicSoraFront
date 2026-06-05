@@ -211,7 +211,7 @@ class QuestionInputPanel extends StatelessWidget {
         return OceanPanel(
           padding: EdgeInsets.all(isCompact ? 8 : 10),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: ConstrainedBox(
@@ -263,16 +263,21 @@ class QuestionInputPanel extends StatelessWidget {
               SizedBox.square(
                 dimension: isCompact ? 48 : 52,
                 child: Material(
-                  color: AppTheme.shellPink,
+                  color: AppTheme.skyBlue,
                   shape: const CircleBorder(),
                   elevation: 0,
                   child: InkWell(
                     customBorder: const CircleBorder(),
                     onTap: onSubmit,
-                    child: const Icon(
-                      Icons.send_rounded,
-                      color: AppTheme.textPrimary,
-                      size: 21,
+                    child: Center(
+                      child: Transform.translate(
+                        offset: const Offset(1.5, 0),
+                        child: const Icon(
+                          Icons.send_rounded,
+                          color: AppTheme.textPrimary,
+                          size: 21,
+                        ),
+                      ),
                     ),
                   ),
                 ),
