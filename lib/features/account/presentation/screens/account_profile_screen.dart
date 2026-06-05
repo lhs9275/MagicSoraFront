@@ -371,12 +371,13 @@ class _ProfileMenuSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OceanPanel(
-      padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+      color: Colors.white.withValues(alpha: 0.74),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
             child: Row(
               children: [
                 Expanded(
@@ -388,11 +389,22 @@ class _ProfileMenuSection extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  '5개',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.primaryDark,
-                    fontWeight: FontWeight.w900,
+                Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 11),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppTheme.cream.withValues(alpha: 0.78),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white),
+                  ),
+                  child: Text(
+                    '5개',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.primaryDark,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],
@@ -400,7 +412,6 @@ class _ProfileMenuSection extends StatelessWidget {
           ),
           _ProfileMenuTile(
             icon: Icons.history_rounded,
-            color: AppTheme.primaryTeal,
             title: '내 토론 기록',
             subtitle: '저장된 토론과 이전 결론을 확인합니다.',
             onTap: () => onMenuTap('내 토론 기록'),
@@ -408,7 +419,6 @@ class _ProfileMenuSection extends StatelessWidget {
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.tune_rounded,
-            color: AppTheme.primaryTeal,
             title: '평가 기준 설정',
             subtitle: '논리성, 근거, 현실성 가중치를 조정합니다.',
             onTap: () => onMenuTap('평가 기준 설정'),
@@ -416,7 +426,6 @@ class _ProfileMenuSection extends StatelessWidget {
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.notifications_rounded,
-            color: AppTheme.primaryTeal,
             title: '알림 설정',
             subtitle: '토론 완료와 세션 업데이트 알림을 관리합니다.',
             onTap: () => onMenuTap('알림 설정'),
@@ -424,7 +433,6 @@ class _ProfileMenuSection extends StatelessWidget {
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.help_rounded,
-            color: AppTheme.primaryTeal,
             title: '도움말',
             subtitle: '토론 방식과 점수 계산 기준을 확인합니다.',
             onTap: () => onMenuTap('도움말'),
@@ -432,7 +440,6 @@ class _ProfileMenuSection extends StatelessWidget {
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.info_rounded,
-            color: AppTheme.primaryTeal,
             title: '앱 정보',
             subtitle: 'Magic Sora Debate 데모 버전입니다.',
             onTap: () => onMenuTap('앱 정보'),
@@ -446,14 +453,12 @@ class _ProfileMenuSection extends StatelessWidget {
 class _ProfileMenuTile extends StatelessWidget {
   const _ProfileMenuTile({
     required this.icon,
-    required this.color,
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
 
   final IconData icon;
-  final Color color;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -476,15 +481,11 @@ class _ProfileMenuTile extends StatelessWidget {
                   height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBg.withValues(alpha: 0.92),
+                    color: AppTheme.cream.withValues(alpha: 0.64),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: color.withValues(alpha: 0.16)),
+                    border: Border.all(color: Colors.white, width: 1.2),
                   ),
-                  child: Icon(
-                    icon,
-                    color: AppTheme.primaryDark.withValues(alpha: 0.9),
-                    size: 21,
-                  ),
+                  child: Icon(icon, color: AppTheme.primaryDark, size: 21),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -512,7 +513,7 @@ class _ProfileMenuTile extends StatelessWidget {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBg.withValues(alpha: 0.62),
+                    color: Colors.white.withValues(alpha: 0.58),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -537,7 +538,7 @@ class _MenuDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       height: 1,
-      color: AppTheme.border.withValues(alpha: 0.48),
+      color: Colors.white.withValues(alpha: 0.68),
       indent: 64,
       endIndent: 8,
     );
@@ -558,32 +559,29 @@ class _LogoutButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: onPressed,
         child: Container(
-          height: 54,
+          height: 52,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.62),
+            color: AppTheme.cream.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: AppTheme.coralDark.withValues(alpha: 0.24),
-              width: 1.2,
-            ),
+            border: Border.all(color: Colors.white, width: 1.4),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryDark.withValues(alpha: 0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: AppTheme.primaryDark.withValues(alpha: 0.07),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
               ),
             ],
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.logout_rounded, color: AppTheme.coralDark, size: 20),
+              Icon(Icons.logout_rounded, color: AppTheme.primaryDark, size: 20),
               SizedBox(width: 8),
               Text(
                 '로그아웃',
                 style: TextStyle(
-                  color: AppTheme.coralDark,
+                  color: AppTheme.primaryDark,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
