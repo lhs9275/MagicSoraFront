@@ -243,7 +243,7 @@ class _QuestionDivider extends StatelessWidget {
       width: double.infinity,
       child: CustomPaint(
         painter: _QuestionDividerPainter(
-          color: AppTheme.primaryDark.withValues(alpha: 0.24),
+          color: AppTheme.primaryDark.withValues(alpha: 0.13),
         ),
       ),
     );
