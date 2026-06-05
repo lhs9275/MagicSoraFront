@@ -163,6 +163,10 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
   }
 
   Future<void> _submitLogin() async {
+    if (_isSubmitting) {
+      return;
+    }
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
@@ -245,7 +249,7 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
               ),
               const SizedBox(height: 18),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280),
+                constraints: const BoxConstraints(maxWidth: 300),
                 child: _KakaoLoginButton(onPressed: _submitKakaoLogin),
               ),
               const SizedBox(height: 16),
@@ -254,9 +258,7 @@ class _InlineLoginPanelState extends State<_InlineLoginPanel> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 spacing: 10,
                 runSpacing: 8,
-                children: [
-                  _TextLink(label: '회원가입', onTap: widget.onSignUp),
-                ],
+                children: [_TextLink(label: '회원가입', onTap: widget.onSignUp)],
               ),
             ],
           ),
@@ -273,51 +275,41 @@ class _KakaoLoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const kakaoYellow = Color(0xFFFEE500);
-    const kakaoText = Color(0xFF191600);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const buttonAspectRatio = 300 / 45;
+        final buttonWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.clamp(0.0, 300.0)
+            : 300.0;
+        final buttonHeight = buttonWidth / buttonAspectRatio;
 
-    return Semantics(
-      label: '카카오 로그인',
-      button: true,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: kakaoYellow,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: onPressed,
-            child: SizedBox(
-              height: 58,
-              child: const Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_rounded,
-                      color: kakaoText,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '카카오 로그인',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: kakaoText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+        return Semantics(
+          label: '카카오 로그인',
+          button: true,
+          child: SizedBox(
+            width: buttonWidth,
+            height: buttonHeight,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ExcludeSemantics(
+                  child: Image.asset(
+                    'assets/images/auth/kakao_login_medium_wide.png',
+                    fit: BoxFit.fill,
+                  ),
                 ),
-              ),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: onPressed,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
