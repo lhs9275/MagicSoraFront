@@ -1,14 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/controllers/kakao_auth_controller.dart';
+import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
-class MainMenuScreen extends StatelessWidget {
+class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
 
-  void _submitKakaoLogin(BuildContext context) {
+  @override
+  State<MainMenuScreen> createState() => _MainMenuScreenState();
+}
+
+class _MainMenuScreenState extends State<MainMenuScreen> {
+  final _kakaoAuthController = KakaoAuthController();
+
+  bool _isKakaoSubmitting = false;
+
+  Future<void> _submitKakaoLogin() async {
+    if (_isKakaoSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isKakaoSubmitting = true;
+    });
+
+    final result = await _kakaoAuthController.submitKakaoLogin();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isKakaoSubmitting = false;
+    });
+
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('카카오 로그인은 준비 중입니다.')));
+    ).showSnackBar(SnackBar(content: Text(result.message)));
+
+    if (!result.isSuccess) {
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const MagicConchHomeScreen()),
+    );
   }
 
   @override
@@ -63,7 +100,8 @@ class MainMenuScreen extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.only(bottom: bottomPadding),
                       child: _KakaoLoginButton(
-                        onPressed: () => _submitKakaoLogin(context),
+                        isLoading: _isKakaoSubmitting,
+                        onPressed: _submitKakaoLogin,
                       ),
                     ),
                   ),
@@ -119,10 +157,11 @@ class _BrandBlock extends StatelessWidget {
 }
 
 class _KakaoLoginButton extends StatelessWidget {
-  const _KakaoLoginButton({required this.onPressed});
+  const _KakaoLoginButton({required this.isLoading, required this.onPressed});
 
   static const _assetPath = 'assets/images/auth/kakao_login_medium_wide.png';
 
+  final bool isLoading;
   final VoidCallback onPressed;
 
   @override
@@ -134,21 +173,25 @@ class _KakaoLoginButton extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: onPressed,
+          onTap: isLoading ? null : onPressed,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth < 300
                   ? constraints.maxWidth
                   : 300.0;
 
-              return SizedBox(
-                width: width,
-                height: 45,
-                child: Image.asset(
-                  _assetPath,
+              return AnimatedOpacity(
+                duration: const Duration(milliseconds: 160),
+                opacity: isLoading ? 0.62 : 1,
+                child: SizedBox(
                   width: width,
                   height: 45,
-                  fit: BoxFit.contain,
+                  child: Image.asset(
+                    _assetPath,
+                    width: width,
+                    height: 45,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               );
             },
