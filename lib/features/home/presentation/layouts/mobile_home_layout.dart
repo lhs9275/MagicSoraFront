@@ -23,6 +23,10 @@ class MobileHomeLayout extends StatelessWidget {
         final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
         final inputBottom = keyboardBottom > 0 ? keyboardBottom + 12 : 16.0;
         final contentBottomPadding = inputBottom + 100;
+        final isShort = constraints.maxHeight < 620;
+        final conchHeight = isShort ? 220.0 : 270.0;
+        final conchMaxWidth = constraints.maxWidth < 360 ? 320.0 : 380.0;
+        const conchScale = 1.25;
 
         return Stack(
           children: [
@@ -52,6 +56,7 @@ class MobileHomeLayout extends StatelessWidget {
                         child: SingleChildScrollView(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 '마법의 소라고동!',
@@ -59,28 +64,41 @@ class MobileHomeLayout extends StatelessWidget {
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       color: AppTheme.primaryDark,
-                                      fontSize: 25,
+                                      fontSize: constraints.maxHeight < 620
+                                          ? 30
+                                          : 34,
+                                      height: 1.08,
                                     ),
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 20),
                               ConstrainedBox(
                                 constraints: BoxConstraints(
-                                  maxWidth: constraints.maxWidth < 360
-                                      ? 300
-                                      : 340,
+                                  maxWidth: conchMaxWidth,
                                 ),
-                                child: InteractiveConch(
-                                  height: constraints.maxHeight < 620
-                                      ? 190
-                                      : 220,
-                                  onPull: onSubmitQuestion,
+                                child: SizedBox(
+                                  height: conchHeight * conchScale,
+                                  child: Center(
+                                    child: Transform.translate(
+                                      offset: const Offset(-6, 0),
+                                      child: Transform.scale(
+                                        scale: conchScale,
+                                        child: InteractiveConch(
+                                          height: conchHeight,
+                                          centerOnShell: true,
+                                          tiltAngle: 0.22,
+                                          onPull: onSubmitQuestion,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 22),
+                              const SizedBox(height: 24),
                               Text(
                                 '질문을 쓰고 전송 버튼을 누르거나\n소라고동을 당겨보세요.',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleLarge,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontSize: 20, height: 1.36),
                               ),
                             ],
                           ),

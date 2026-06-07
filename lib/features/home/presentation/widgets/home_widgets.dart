@@ -373,6 +373,9 @@ class AccountShortcut extends StatelessWidget {
 class ConchQuestionPanel extends StatelessWidget {
   const ConchQuestionPanel({required this.onSubmit, super.key});
 
+  static const _conchHeight = 470.0;
+  static const _conchScale = 1.25;
+
   final VoidCallback onSubmit;
 
   @override
@@ -385,20 +388,41 @@ class ConchQuestionPanel extends StatelessWidget {
           '마법의 소라고동!',
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
             color: AppTheme.primaryDark,
-            fontSize: 34,
+            fontSize: 46,
+            height: 1.08,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 26),
         Flexible(
-          child: Center(child: InteractiveConch(height: 390, onPull: onSubmit)),
+          child: Center(
+            child: SizedBox(
+              height: _conchHeight * _conchScale,
+              child: Center(
+                child: Transform.translate(
+                  offset: const Offset(-10, 0),
+                  child: Transform.scale(
+                    scale: _conchScale,
+                    child: InteractiveConch(
+                      height: _conchHeight,
+                      centerOnShell: true,
+                      tiltAngle: 0.22,
+                      onPull: onSubmit,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
+          constraints: const BoxConstraints(maxWidth: 430),
           child: Text(
             '질문을 쓰고 전송 버튼을 누르거나\n소라고동을 당겨보세요.',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontSize: 20, height: 1.36),
             textAlign: TextAlign.center,
           ),
         ),
@@ -513,10 +537,14 @@ class InteractiveConch extends StatefulWidget {
     required this.height,
     required this.onPull,
     super.key,
+    this.centerOnShell = false,
+    this.tiltAngle = 0,
   });
 
   final double height;
   final VoidCallback onPull;
+  final bool centerOnShell;
+  final double tiltAngle;
 
   @override
   State<InteractiveConch> createState() => _InteractiveConchState();
@@ -524,8 +552,8 @@ class InteractiveConch extends StatefulWidget {
 
 class _InteractiveConchState extends State<InteractiveConch> {
   static const _imageAspectRatio = 1546 / 1017;
-  static const _pullThreshold = 54.0;
-  static const _maxPullDistance = 92.0;
+  static const _pullThreshold = 38.0;
+  static const _maxPullDistance = 62.0;
 
   double _pullDistance = 0;
 
@@ -562,6 +590,10 @@ class _InteractiveConchState extends State<InteractiveConch> {
             : widget.height;
         final width = height * _imageAspectRatio;
         final ringSize = height < 340 ? 54.0 : 66.0;
+        final shellCenterOffset = widget.centerOnShell
+            ? _maxPullDistance / 2
+            : 0.0;
+        final pullLift = -_pullDistance * 0.16;
 
         return Semantics(
           button: true,
@@ -569,64 +601,70 @@ class _InteractiveConchState extends State<InteractiveConch> {
           child: SizedBox(
             width: width + _maxPullDistance,
             height: height,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                SizedBox(
-                  width: width,
-                  height: height,
-                  child: Image.asset(
-                    'assets/images/brand/magic_conch.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                Positioned(
-                  left: width * 0.82,
-                  top: height * 0.49,
-                  width: width * 0.2 + _maxPullDistance,
-                  height: height * 0.18,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Transform.translate(
-                      offset: Offset(_pullDistance, 0),
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.grab,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onHorizontalDragUpdate: _handleDragUpdate,
-                          onHorizontalDragEnd: (_) => _handleDragEnd(),
-                          onHorizontalDragCancel: _handleDragEnd,
-                          child: Container(
-                            width: ringSize,
-                            height: ringSize,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.72),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppTheme.primaryDark,
-                                width: 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primaryDark.withValues(
-                                    alpha: 0.18,
+            child: Transform.translate(
+              offset: Offset(shellCenterOffset, 0),
+              child: Transform.rotate(
+                angle: widget.tiltAngle,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SizedBox(
+                      width: width,
+                      height: height,
+                      child: Image.asset(
+                        'assets/images/brand/magic_conch.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Positioned(
+                      left: width * 0.67,
+                      top: height * 0.29,
+                      width: width * 0.2 + _maxPullDistance,
+                      height: height * 0.18,
+                      child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Transform.translate(
+                        offset: Offset(_pullDistance, pullLift),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onHorizontalDragUpdate: _handleDragUpdate,
+                              onHorizontalDragEnd: (_) => _handleDragEnd(),
+                              onHorizontalDragCancel: _handleDragEnd,
+                              child: Container(
+                                width: ringSize,
+                                height: ringSize,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.72),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppTheme.primaryDark,
+                                    width: 3,
                                   ),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryDark.withValues(
+                                        alpha: 0.18,
+                                      ),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.radio_button_checked_rounded,
-                              color: AppTheme.primaryDark,
+                                child: const Icon(
+                                  Icons.radio_button_checked_rounded,
+                                  color: AppTheme.primaryDark,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );

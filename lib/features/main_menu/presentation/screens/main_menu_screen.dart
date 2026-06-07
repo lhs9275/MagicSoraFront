@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/navigation/app_page_routes.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/brand_wordmark.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/kakao_auth_controller.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -154,16 +155,7 @@ class _BrandBlock extends StatelessWidget {
             children: [
               Transform.translate(
                 offset: Offset(0, isTight ? -38 : -52),
-                child: Text(
-                  'Magic Sora',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppTheme.primaryDark,
-                    fontSize: isTight ? 36 : 44,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
+                child: BrandWordmark(fontSize: isTight ? 42 : 54),
               ),
               const SizedBox(height: 28),
               Image.asset(
