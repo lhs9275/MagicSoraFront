@@ -34,7 +34,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('마법의 소라고동!'), findsOneWidget);
-    expect(find.text('질문 목록'), findsOneWidget);
+    expect(find.text('질문 기록'), findsOneWidget);
     expect(find.text('계정 정보'), findsOneWidget);
     expect(find.text('무엇이 궁금한가요?'), findsOneWidget);
   });
@@ -88,5 +88,65 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('질문하고, 토론하고, 기록하는 마법의 소라고동'), findsOneWidget);
+  });
+
+  testWidgets('질문 기록 항목에서 이전 답변 보기 액션을 열 수 있다', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(home: MagicConchHomeScreen(user: AppUser.fallback)),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('질문 기록'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('나는 사람이다'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('이전 답변 보기'), findsOneWidget);
+    expect(find.text('이어서 질문하기'), findsOneWidget);
+
+    await tester.tap(find.text('이전 답변 보기'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(find.text('이전에 받은 답변'), findsOneWidget);
+  });
+
+  testWidgets('질문 기록 항목에서 이어서 질문하기를 시작할 수 있다', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(home: MagicConchHomeScreen(user: AppUser.fallback)),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('질문 기록'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('나는 사람이다'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('이어서 질문하기'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(find.text('질문 이어가기'), findsOneWidget);
+    expect(find.text('추가 질문 보내기'), findsOneWidget);
   });
 }

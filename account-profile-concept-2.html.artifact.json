@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "계정정보 보존형 시안",
+  "entry": "account-profile-concept-2.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "primary": true,
+  "createdAt": "2026-06-07T16:50:31.005Z",
+  "updatedAt": "2026-06-07T16:50:31.032Z",
+  "metadata": {
+    "identifier": "account-profile-concept",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

@@ -2,16 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
+import 'package:magicsorafront/features/home/models/question_history_entry.dart';
 
 const _historyRowText = AppTheme.textPrimary;
 const _historyRowSecondary = AppTheme.textSecondary;
-const _historyRow = Color(0xFFF2FBFA);
-const _historyDivider = Color(0xFFCFE8E5);
+const _historyDivider = Color(0xFFD6ECE8);
 
 class QuestionHistoryPanel extends StatelessWidget {
-  const QuestionHistoryPanel({required this.questions, super.key});
+  const QuestionHistoryPanel({
+    required this.questions,
+    super.key,
+    this.onViewAll,
+    this.onQuestionTap,
+  });
 
-  final List<String> questions;
+  final List<QuestionHistoryEntry> questions;
+  final VoidCallback? onViewAll;
+  final ValueChanged<QuestionHistoryEntry>? onQuestionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -21,22 +28,40 @@ class QuestionHistoryPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  '최근 질문',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _historyRowText,
-                    fontSize: 17,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '질문 아카이브',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: _historyRowText,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '다시 꺼내보기 좋은 질문들',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _historyRowSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                '${questions.length}개',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _historyRowSecondary,
-                  fontWeight: FontWeight.w800,
-                ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _HistoryCountPill(count: questions.length),
+                  if (onViewAll != null) ...[
+                    const SizedBox(height: 8),
+                    _HistoryActionChip(onTap: onViewAll!),
+                  ],
+                ],
               ),
             ],
           ),
@@ -45,9 +70,16 @@ class QuestionHistoryPanel extends StatelessWidget {
             child: ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: questions.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                return HistoryTile(question: questions[index]);
+                return HistoryTile(
+                  question: questions[index].question,
+                  index: index + 1,
+                  compact: true,
+                  onTap: onQuestionTap == null
+                      ? null
+                      : () => onQuestionTap!(questions[index]),
+                );
               },
             ),
           ),
@@ -58,40 +90,218 @@ class QuestionHistoryPanel extends StatelessWidget {
 }
 
 class HistoryTile extends StatelessWidget {
-  const HistoryTile({required this.question, super.key});
+  const HistoryTile({
+    required this.question,
+    super.key,
+    this.index,
+    this.compact = false,
+    this.caption,
+    this.backgroundColor,
+    this.borderColor,
+    this.trailing,
+    this.onTap,
+  });
 
   final String question;
+  final int? index;
+  final bool compact;
+  final String? caption;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final questionStyle =
+        (compact
+                ? Theme.of(context).textTheme.bodyMedium
+                : Theme.of(context).textTheme.bodyLarge)
+            ?.copyWith(
+              color: _historyRowText,
+              fontWeight: FontWeight.w800,
+              height: compact ? 1.42 : 1.5,
+            );
+    final captionStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: _historyRowSecondary,
+      fontSize: compact ? 12 : 13,
+      fontWeight: FontWeight.w700,
+      height: 1.35,
+    );
+    final badgeSize = compact ? 36.0 : 44.0;
+    final radius = compact ? 20.0 : 24.0;
+    final decoration = BoxDecoration(
+      color: backgroundColor ?? Colors.white.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: borderColor ?? _historyDivider.withValues(alpha: 0.9),
+      ),
+      boxShadow: compact
+          ? null
+          : [
+              BoxShadow(
+                color: AppTheme.shadowTint.withValues(alpha: 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+    );
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 14,
+        compact ? 12 : 14,
+        compact ? 12 : 16,
+        compact ? 12 : 14,
+      ),
+      child: Row(
+        crossAxisAlignment: caption == null
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: badgeSize,
+            height: badgeSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.84),
+              borderRadius: BorderRadius.circular(compact ? 14 : 16),
+              border: Border.all(
+                color: AppTheme.skyBlue.withValues(alpha: 0.22),
+              ),
+            ),
+            child: index == null
+                ? Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: AppTheme.primaryDark,
+                    size: compact ? 17 : 18,
+                  )
+                : Text(
+                    index!.toString().padLeft(2, '0'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppTheme.primaryDark,
+                      fontSize: compact ? 12 : 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Align(
+              alignment: caption == null
+                  ? Alignment.centerLeft
+                  : Alignment.topLeft,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (caption != null) ...[
+                    Text(caption!, style: captionStyle),
+                    const SizedBox(height: 6),
+                  ],
+                  Text(
+                    question,
+                    maxLines: compact ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: questionStyle,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return Container(
+        width: double.infinity,
+        decoration: decoration,
+        child: content,
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(radius),
+        child: Ink(
+          decoration: decoration,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(radius),
+            onTap: onTap,
+            child: content,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryCountPill extends StatelessWidget {
+  const _HistoryCountPill({required this.count});
+
+  final int count;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: _historyRow,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _historyDivider),
+        color: Colors.white.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.22)),
       ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.chat_bubble_outline_rounded,
-            color: AppTheme.primaryDark,
-            size: 17,
+      child: Text(
+        '$count개',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: _historyRowSecondary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryActionChip extends StatelessWidget {
+  const _HistoryActionChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceRaised.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.2)),
           ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              question,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _historyRowText,
-                fontWeight: FontWeight.w800,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '전체 보기',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.primaryDark,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppTheme.primaryDark,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

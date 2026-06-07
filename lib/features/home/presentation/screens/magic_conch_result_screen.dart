@@ -14,9 +14,18 @@ enum QuestionRequestMode {
 }
 
 class MagicConchResultScreen extends StatefulWidget {
-  const MagicConchResultScreen({required this.question, super.key});
+  const MagicConchResultScreen({
+    required this.question,
+    super.key,
+    this.initialAnswer,
+    this.showAnswerImmediately = false,
+    this.showFollowUpInputInitially = false,
+  });
 
   final String question;
+  final String? initialAnswer;
+  final bool showAnswerImmediately;
+  final bool showFollowUpInputInitially;
 
   @override
   State<MagicConchResultScreen> createState() => _MagicConchResultScreenState();
@@ -25,11 +34,25 @@ class MagicConchResultScreen extends StatefulWidget {
 class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   final _followUpController = TextEditingController();
 
-  bool _isAnswerReady = false;
-  bool _showFollowUpInput = false;
+  late bool _isAnswerReady;
+  late bool _showFollowUpInput;
 
   String get _trimmedQuestion => widget.question.trim();
   bool get _hasQuestion => _trimmedQuestion.isNotEmpty;
+  bool get _hasInitialAnswer =>
+      widget.initialAnswer != null && widget.initialAnswer!.trim().isNotEmpty;
+  bool get _isHistoryAnswerVisible =>
+      _isAnswerReady && _hasInitialAnswer && !widget.showFollowUpInputInitially;
+  String get _resolvedAnswer => _hasInitialAnswer
+      ? widget.initialAnswer!.trim()
+      : _buildTemporaryAnswer();
+
+  @override
+  void initState() {
+    super.initState();
+    _isAnswerReady = widget.showAnswerImmediately && _hasInitialAnswer;
+    _showFollowUpInput = widget.showFollowUpInputInitially && _isAnswerReady;
+  }
 
   String _buildTemporaryAnswer() {
     // TODO: 실제 API 연결 후에는 이 임시 답변 대신 서버 응답을 반환하도록 교체한다.
@@ -41,7 +64,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
     return {
       'mode': QuestionRequestMode.followUp.apiValue,
       'originalQuestion': _trimmedQuestion,
-      'currentAnswer': _buildTemporaryAnswer(),
+      'currentAnswer': _resolvedAnswer,
       'followUpQuestion': followUpQuestion,
     };
   }
@@ -67,7 +90,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       MaterialPageRoute<void>(
         builder: (_) => EvaluationResultScreen(
           question: _trimmedQuestion,
-          answer: _buildTemporaryAnswer(),
+          answer: _resolvedAnswer,
         ),
       ),
     );
@@ -90,7 +113,8 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
     }
 
     final contextPayload = _buildFollowUpContext(followUpQuestion);
-    final mode = contextPayload['mode'] ?? QuestionRequestMode.followUp.apiValue;
+    final mode =
+        contextPayload['mode'] ?? QuestionRequestMode.followUp.apiValue;
     final followUpPreview = contextPayload['followUpQuestion'] ?? '';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -103,10 +127,15 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   @override
   Widget build(BuildContext context) {
     final displayQuestion = _hasQuestion ? _trimmedQuestion : '질문이 아직 비어 있어요.';
-    final temporaryAnswer = _buildTemporaryAnswer();
+    final answer = _resolvedAnswer;
+    final appBarTitle = widget.showFollowUpInputInitially
+        ? '질문 이어가기'
+        : _isHistoryAnswerVisible
+        ? '이전 답변'
+        : '소라고동의 답변';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('소라고동의 답변')),
+      appBar: AppBar(title: Text(appBarTitle)),
       body: OceanShellBackground(
         child: Center(
           child: SingleChildScrollView(
@@ -130,35 +159,47 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                       displayQuestion,
                       style: _hasQuestion
                           ? Theme.of(context).textTheme.bodyLarge
-                          : Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  color: AppTheme.primaryDark,
-                                  fontSize: 28,
-                                ),
+                          : Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: AppTheme.primaryDark,
+                              fontSize: 28,
+                            ),
                       textAlign: TextAlign.center,
                     ),
                     if (_hasQuestion) ...[
+                      if (_isHistoryAnswerVisible) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          '이전에 받은 답변',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: AppTheme.primaryDark,
+                                fontWeight: FontWeight.w900,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       const SizedBox(height: 22),
-                      Text(
-                        '마법의 소라고동이 곧 답을 들려줄 꺼에요',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: AppTheme.primaryDark,
-                              fontSize: 24,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-                      if (_isAnswerReady)
-                        const _CompletedLoadingBar()
-                      else
+                      if (!_isAnswerReady) ...[
+                        Text(
+                          '마법의 소라고동이 곧 답을 들려줄 꺼에요',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: AppTheme.primaryDark,
+                                fontSize: 24,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 14),
                         _TemporaryLoadingBar(
                           onCompleted: _handleLoadingCompleted,
                         ),
+                      ] else if (!_hasInitialAnswer) ...[
+                        const _CompletedLoadingBar(),
+                      ],
                       if (_isAnswerReady) ...[
                         const SizedBox(height: 22),
                         _TemporaryAnswerCard(
-                          answer: temporaryAnswer,
+                          answer: answer,
                           onTap: _openEvaluationResult,
                         ),
                       ],
@@ -200,10 +241,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
 }
 
 class _TemporaryAnswerCard extends StatelessWidget {
-  const _TemporaryAnswerCard({
-    required this.answer,
-    required this.onTap,
-  });
+  const _TemporaryAnswerCard({required this.answer, required this.onTap});
 
   final String answer;
   final VoidCallback onTap;
@@ -314,17 +352,15 @@ class _TemporaryLoadingBarState extends State<_TemporaryLoadingBar>
   void initState() {
     super.initState();
     // API 연결 전 임시 UI라 5초 동안 0%에서 100%까지 채우는 애니메이션을 사용한다.
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed && !_didNotifyCompleted) {
-          _didNotifyCompleted = true;
-          widget.onCompleted();
-        }
-      })
-      ..forward();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 5))
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed && !_didNotifyCompleted) {
+              _didNotifyCompleted = true;
+              widget.onCompleted();
+            }
+          })
+          ..forward();
   }
 
   @override

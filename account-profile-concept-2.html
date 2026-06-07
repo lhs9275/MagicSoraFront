@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>계정정보 화면 시안 2</title>
+  <style>
+    :root {
+      --bg-top: oklch(96% 0.032 190);
+      --bg-bottom: oklch(93% 0.035 215);
+      --surface: oklch(100% 0.004 95 / 0.8);
+      --surface-strong: oklch(99% 0.016 210 / 0.92);
+      --surface-soft: oklch(98% 0.02 100 / 0.9);
+      --line: oklch(90% 0.02 190);
+      --line-strong: oklch(82% 0.04 194);
+      --fg: oklch(31% 0.048 208);
+      --muted: oklch(56% 0.03 205);
+      --teal: oklch(72% 0.13 191);
+      --teal-strong: oklch(54% 0.1 207);
+      --shell-blue: oklch(84% 0.065 248);
+      --sand: oklch(96% 0.055 100);
+      --foam: oklch(99% 0.01 95);
+      --danger: oklch(63% 0.16 22);
+      --shadow: 0 24px 60px rgba(30, 102, 119, 0.16);
+      --shadow-soft: 0 16px 32px rgba(71, 159, 178, 0.12);
+      --font-body: "Pretendard Variable", "SUIT Variable", "Apple SD Gothic Neo",
+        "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-body);
+      color: var(--fg);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(145, 232, 226, 0.92), transparent 28%),
+        radial-gradient(circle at 82% 14%, rgba(183, 214, 255, 0.78), transparent 22%),
+        linear-gradient(180deg, #f1fffd 0%, #eefaf8 48%, #fffdf5 100%);
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      overflow: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        radial-gradient(circle at 50% 100%, rgba(255, 249, 220, 0.7), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 36%);
+    }
+
+    body::after {
+      background:
+        repeating-linear-gradient(
+          120deg,
+          rgba(255, 255, 255, 0.14) 0,
+          rgba(255, 255, 255, 0.14) 1px,
+          transparent 1px,
+          transparent 28px
+        );
+      opacity: 0.45;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      height: min(844px, calc(100vh - 32px));
+      padding: 12px;
+      border-radius: 42px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.18)),
+        rgba(12, 37, 49, 0.08);
+      box-shadow:
+        0 40px 100px rgba(28, 72, 82, 0.24),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      position: relative;
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 112px;
+      height: 30px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(20, 34, 40, 0.85);
+      z-index: 4;
+    }
+
+    .screen {
+      height: 100%;
+      border-radius: 32px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(144, 230, 221, 0.46), transparent 24%),
+        radial-gradient(circle at 88% 12%, rgba(183, 211, 255, 0.44), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.92)),
+        linear-gradient(180deg, #effbf9 0%, #f8fffd 58%, #fffdf7 100%);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      position: relative;
+      isolation: isolate;
+      padding: 56px 18px 18px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(255, 236, 171, 0.25), transparent 28%);
+      z-index: 0;
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: -8%;
+      height: 180px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.45), transparent 52%),
+        linear-gradient(180deg, rgba(255, 240, 189, 0.12), rgba(255, 241, 196, 0.3));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .topbar,
+    .hero-button,
+    .panel,
+    .logout {
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      background: rgba(255, 255, 255, 0.62);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow-soft);
+      color: var(--fg);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .topbar-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .topbar-copy strong {
+      display: block;
+      font-size: 1.58rem;
+      line-height: 1.03;
+      letter-spacing: -0.04em;
+    }
+
+    .topbar-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .provider {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      height: 38px;
+      padding: 0 12px;
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, rgba(255, 247, 202, 0.96), rgba(227, 247, 244, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 22px rgba(84, 173, 186, 0.18);
+      color: var(--teal-strong);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-button {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .hero-button:focus-visible {
+      outline: none;
+    }
+
+    .hero {
+      padding: 18px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 88% 18%, rgba(201, 214, 255, 0.5), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.68)),
+        linear-gradient(135deg, rgba(255, 254, 245, 0.96), rgba(236, 252, 248, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform 220ms ease, box-shadow 220ms ease;
+      position: relative;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -22px;
+      right: -18px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(157, 217, 255, 0.72), rgba(157, 217, 255, 0));
+      opacity: 0.8;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: -52px;
+      height: 110px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.62), transparent 50%),
+        linear-gradient(180deg, rgba(255, 243, 199, 0.18), rgba(255, 244, 210, 0.38));
+      opacity: 0.95;
+    }
+
+    .hero-button:hover .hero,
+    .hero-button:focus-visible .hero {
+      transform: translateY(-2px);
+      box-shadow: 0 26px 64px rgba(30, 102, 119, 0.2);
+    }
+
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 14px;
+    }
+
+    .brand-wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #fffdf7;
+      font-size: 1.08rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      text-shadow:
+        0 0 0 #efab31,
+        1px 0 0 #efab31,
+        -1px 0 0 #efab31,
+        0 1px 0 #efab31,
+        0 -1px 0 #efab31,
+        0 8px 18px rgba(239, 171, 49, 0.16);
+    }
+
+    .brand-wordmark::before {
+      content: "✦";
+      color: rgba(255, 205, 94, 0.96);
+      font-size: 0.88rem;
+      text-shadow: none;
+    }
+
+    .hero-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      color: var(--teal-strong);
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      box-shadow: 0 10px 20px rgba(108, 184, 196, 0.1);
+    }
+
+    .hero-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 248, 255, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.96);
+      box-shadow: 0 14px 28px rgba(105, 182, 197, 0.18);
+      display: grid;
+      place-items: center;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .avatar::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(229, 248, 247, 0.94), rgba(243, 242, 255, 0.88));
+      z-index: 0;
+    }
+
+    .avatar img {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 10px 22px rgba(109, 190, 205, 0.24));
+    }
+
+    .avatar-badge {
+      position: absolute;
+      right: -4px;
+      bottom: -6px;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 10px;
+      background: var(--sand);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-strong);
+      font-size: 0.66rem;
+      font-weight: 900;
+      z-index: 2;
+    }
+
+    .hero-copy {
+      min-width: 0;
+      flex: 1;
+      padding-top: 2px;
+    }
+
+    .hero-copy strong {
+      display: block;
+      font-size: 1.84rem;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1.45;
+      max-width: 20ch;
+    }
+
+    .session {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(237, 251, 249, 0.88);
+      border: 1px solid rgba(193, 231, 229, 0.9);
+      position: relative;
+      z-index: 1;
+    }
+
+    .session-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .session-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 14px;
+      background: rgba(34, 184, 183, 0.12);
+      display: grid;
+      place-items: center;
+      color: var(--teal-strong);
+      font-size: 0.95rem;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .session-copy strong {
+      display: block;
+      font-size: 0.95rem;
+      line-height: 1.1;
+    }
+
+    .session-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .session-chevron {
+      color: var(--teal-strong);
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .panel {
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow-soft);
+      transition: opacity 220ms ease, transform 220ms ease, filter 220ms ease;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .panel-header strong {
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-header span {
+      color: var(--teal-strong);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .menu-list,
+    .detail-list {
+      display: grid;
+      gap: 0;
+    }
+
+    .menu-row,
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 56px;
+      padding: 10px 0;
+    }
+
+    .menu-row + .menu-row,
+    .detail-row + .detail-row {
+      border-top: 1px solid rgba(188, 226, 219, 0.8);
+    }
+
+    .menu-icon,
+    .detail-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background:
+        linear-gradient(180deg, rgba(236, 250, 248, 0.92), rgba(255, 249, 229, 0.9));
+      border: 1px solid rgba(192, 230, 223, 0.94);
+      color: var(--teal-strong);
+      font-size: 0.98rem;
+      font-weight: 900;
+    }
+
+    .menu-copy,
+    .detail-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .menu-copy strong,
+    .detail-copy label {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .menu-copy span,
+    .detail-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .menu-chevron {
+      color: var(--muted);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .detail-value {
+      max-width: 140px;
+      text-align: right;
+      color: var(--fg);
+      font-size: 0.84rem;
+      font-weight: 900;
+      line-height: 1.28;
+    }
+
+    .logout {
+      height: 50px;
+      border-radius: 18px;
+      border: 1px solid rgba(213, 120, 106, 0.22);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--danger);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      font-weight: 900;
+      box-shadow: 0 10px 24px rgba(211, 136, 121, 0.08);
+      transition: opacity 220ms ease, transform 220ms ease, filter 220ms ease;
+    }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(19, 56, 72, 0.18);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+      z-index: 5;
+    }
+
+    .detail-sheet {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      padding: 14px 16px 16px;
+      border-radius: 30px 30px 22px 22px;
+      background:
+        radial-gradient(circle at 84% 10%, rgba(191, 214, 255, 0.5), transparent 18%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 252, 255, 0.94)),
+        linear-gradient(180deg, rgba(250, 250, 255, 0.94), rgba(245, 252, 249, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.98);
+      box-shadow:
+        0 30px 70px rgba(26, 88, 105, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      transform: translateY(calc(100% + 24px));
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 220ms ease;
+      z-index: 6;
+    }
+
+    .sheet-grabber {
+      width: 54px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(93, 160, 176, 0.22);
+      margin: 0 auto 14px;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--teal-strong);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sheet-kicker::before {
+      content: "◌";
+      color: var(--shell-blue);
+    }
+
+    .sheet-title {
+      margin-top: 6px;
+      font-size: 1.28rem;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .sheet-close {
+      min-width: 64px;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid rgba(193, 231, 229, 0.9);
+      border-radius: 14px;
+      background: rgba(241, 252, 249, 0.92);
+      color: var(--teal-strong);
+      font-size: 0.82rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .sheet-close:focus-visible,
+    .hero-button:focus-visible .hero {
+      outline: 2px solid rgba(34, 184, 183, 0.42);
+      outline-offset: 3px;
+    }
+
+    .screen[data-sheet-open="true"] .sheet-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .screen[data-sheet-open="true"] .detail-sheet {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .screen[data-sheet-open="true"] .settings-panel,
+    .screen[data-sheet-open="true"] .logout {
+      opacity: 0.22;
+      transform: translateY(10px);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    @media (max-height: 860px) {
+      body {
+        overflow: auto;
+      }
+
+      .phone {
+        height: 844px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="계정정보 화면 시안">
+    <section class="screen" data-sheet-open="false">
+      <header class="topbar">
+        <div class="icon-button" aria-hidden="true">‹</div>
+        <div class="topbar-copy">
+          <strong>계정</strong>
+          <span>카카오 연결됨</span>
+        </div>
+        <div class="provider">KAKAO</div>
+      </header>
+
+      <div
+        class="hero-button"
+        id="profile-trigger"
+        role="button"
+        tabindex="0"
+        aria-controls="detail-sheet"
+        aria-expanded="false"
+      >
+        <section class="hero" aria-label="프로필 요약">
+          <div class="hero-brand">
+            <div class="brand-wordmark">magic sora</div>
+            <div class="hero-action" id="profile-action">상세 보기</div>
+          </div>
+          <div class="hero-main">
+            <div class="avatar">
+              <img src="assets/images/brand/magic_conch.png" alt="매직소라 조개 심볼" />
+              <div class="avatar-badge">카카오</div>
+            </div>
+            <div class="hero-copy">
+              <strong>계정 보관함</strong>
+              <p>카카오로 연결된 질문과 기록</p>
+            </div>
+          </div>
+          <div class="session">
+            <div class="session-left">
+              <div class="session-mark">✓</div>
+              <div class="session-copy">
+                <strong>정상 연결</strong>
+                <span id="profile-hint">카드 탭으로 상세 열기</span>
+              </div>
+            </div>
+            <div class="session-chevron" id="profile-chevron">⌄</div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel settings-panel" aria-label="설정과 기록">
+        <div class="panel-header">
+          <strong>기록과 설정</strong>
+          <span>기본 메뉴</span>
+        </div>
+        <div class="menu-list">
+          <div class="menu-row">
+            <div class="menu-icon">⟳</div>
+            <div class="menu-copy">
+              <strong>내 토론 기록</strong>
+              <span>저장한 답 다시 보기</span>
+            </div>
+            <div class="menu-chevron">›</div>
+          </div>
+          <div class="menu-row">
+            <div class="menu-icon">≋</div>
+            <div class="menu-copy">
+              <strong>평가 기준</strong>
+              <span>가중치 조정</span>
+            </div>
+            <div class="menu-chevron">›</div>
+          </div>
+          <div class="menu-row">
+            <div class="menu-icon">◔</div>
+            <div class="menu-copy">
+              <strong>알림 설정</strong>
+              <span>도착 방식 관리</span>
+            </div>
+            <div class="menu-chevron">›</div>
+          </div>
+          <div class="menu-row">
+            <div class="menu-icon">?</div>
+            <div class="menu-copy">
+              <strong>도움말</strong>
+              <span>사용법 확인</span>
+            </div>
+            <div class="menu-chevron">›</div>
+          </div>
+        </div>
+      </section>
+
+      <button class="logout" type="button">로그아웃</button>
+
+      <div class="sheet-backdrop" id="sheet-backdrop" aria-hidden="true"></div>
+
+      <section
+        class="detail-sheet"
+        id="detail-sheet"
+        role="dialog"
+        aria-modal="false"
+        aria-hidden="true"
+        aria-labelledby="detail-title"
+      >
+        <div class="sheet-grabber" aria-hidden="true"></div>
+        <div class="sheet-header">
+          <div>
+            <div class="sheet-kicker">profile shell</div>
+            <div class="sheet-title" id="detail-title">계정 상세</div>
+          </div>
+          <button class="sheet-close" id="sheet-close" type="button">닫기</button>
+        </div>
+        <div class="detail-list">
+          <div class="detail-row">
+            <div class="detail-icon">◎</div>
+            <div class="detail-copy">
+              <label>로그인 방식</label>
+              <span>현재 연결 수단</span>
+            </div>
+            <div class="detail-value">카카오</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">@</div>
+            <div class="detail-copy">
+              <label>이메일</label>
+              <span>동기화 계정</span>
+            </div>
+            <div class="detail-value">카카오 이메일</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">◌</div>
+            <div class="detail-copy">
+              <label>기록 상태</label>
+              <span>질문과 답 보관</span>
+            </div>
+            <div class="detail-value">연결 유지 중</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">1.0</div>
+            <div class="detail-copy">
+              <label>앱 버전</label>
+              <span>현재 빌드</span>
+            </div>
+            <div class="detail-value">v1.0</div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var screen = document.querySelector('.screen');
+      var trigger = document.getElementById('profile-trigger');
+      var detailSheet = document.getElementById('detail-sheet');
+      var backdrop = document.getElementById('sheet-backdrop');
+      var closeButton = document.getElementById('sheet-close');
+      var actionLabel = document.getElementById('profile-action');
+      var hintLabel = document.getElementById('profile-hint');
+      var chevron = document.getElementById('profile-chevron');
+
+      function setSheet(open) {
+        screen.dataset.sheetOpen = open ? 'true' : 'false';
+        trigger.setAttribute('aria-expanded', String(open));
+        detailSheet.setAttribute('aria-hidden', String(!open));
+        backdrop.setAttribute('aria-hidden', String(!open));
+        actionLabel.textContent = open ? '닫기' : '상세 보기';
+        hintLabel.textContent = open ? '카드를 다시 누르면 닫힙니다.' : '카드 탭으로 상세 열기';
+        chevron.textContent = open ? '⌃' : '⌄';
+      }
+
+      trigger.addEventListener('click', function () {
+        setSheet(screen.dataset.sheetOpen !== 'true');
+      });
+
+      trigger.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setSheet(screen.dataset.sheetOpen !== 'true');
+        }
+      });
+
+      closeButton.addEventListener('click', function () {
+        setSheet(false);
+      });
+
+      backdrop.addEventListener('click', function () {
+        setSheet(false);
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && screen.dataset.sheetOpen === 'true') {
+          setSheet(false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

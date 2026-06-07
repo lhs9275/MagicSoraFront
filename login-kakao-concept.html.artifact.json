@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "login-kakao-concept.html",
+  "entry": "login-kakao-concept.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-06-07T16:16:17.196Z",
+  "updatedAt": "2026-06-07T16:16:17.196Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

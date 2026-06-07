@@ -35,8 +35,8 @@ class MobileHomeLayout extends StatelessWidget {
                     Row(
                       children: [
                         _MobileTopButton(
-                          label: '질문 목록',
-                          icon: Icons.menu_rounded,
+                          label: '질문 기록',
+                          icon: Icons.history_rounded,
                           onTap: onOpenQuestionHistory,
                         ),
                         const Spacer(),
