@@ -15,6 +15,7 @@ if (localPropertiesFile.exists()) {
 
 val kakaoNativeAppKey = (
     localProperties.getProperty("kakao.native_app_key")
+        ?: providers.gradleProperty("kakao.native_app_key").orNull
         ?: providers.environmentVariable("KAKAO_NATIVE_APP_KEY").orNull
         ?: ""
 ).trim()
@@ -54,7 +55,19 @@ android {
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$escapedKakaoNativeAppKey\"")
     }
 
+    signingConfigs {
+        create("sharedDebug") {
+            storeFile = file("shared-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("sharedDebug")
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
