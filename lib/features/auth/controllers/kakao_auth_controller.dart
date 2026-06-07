@@ -2,8 +2,19 @@ import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/config/kakao_config.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
+import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
+import 'package:magicsorafront/features/auth/services/bff_auth_service.dart';
 
 class KakaoAuthController {
+  KakaoAuthController({
+    BffAuthService? bffAuthService,
+    AuthSessionStore? authSessionStore,
+  }) : _bffAuthService = bffAuthService ?? BffAuthService(),
+       _authSessionStore = authSessionStore ?? AuthSessionStore.instance;
+
+  final BffAuthService _bffAuthService;
+  final AuthSessionStore _authSessionStore;
+
   Future<LoginResult> submitKakaoLogin() async {
     if (!KakaoConfig.hasNativeAppKey) {
       return const LoginResult(
@@ -22,11 +33,17 @@ class KakaoAuthController {
       }
 
       final user = await _fetchKakaoUserOrFallback();
+      final session = await _bffAuthService.exchangeKakaoAccessToken(
+        kakaoAccessToken: token.accessToken,
+        fallbackUser: user,
+      );
+      await _authSessionStore.saveSession(session);
 
       return LoginResult(
         isSuccess: true,
-        message: '${user.nickname}님, 카카오 로그인에 성공했습니다.',
-        user: user,
+        message: '${session.user.nickname}님, 로그인에 성공했습니다.',
+        user: session.user,
+        session: session,
       );
     } catch (error) {
       return LoginResult(isSuccess: false, message: _messageFor(error));
@@ -81,6 +98,10 @@ class KakaoAuthController {
 
     if (error is KakaoException) {
       return '카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+    }
+
+    if (error is BffAuthException) {
+      return error.message;
     }
 
     return '카카오 로그인 중 문제가 발생했습니다.';

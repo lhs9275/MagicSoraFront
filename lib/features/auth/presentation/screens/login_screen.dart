@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/navigation/app_page_routes.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
@@ -60,8 +61,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => MagicConchHomeScreen(
+      fadeSlideRoute<void>(
+        MagicConchHomeScreen(
           user:
               result.user ?? AppUser.demo(email: _emailController.text.trim()),
         ),
@@ -71,9 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _openPreview() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => MagicConchHomeScreen(user: AppUser.demo()),
-      ),
+      fadeSlideRoute<void>(MagicConchHomeScreen(user: AppUser.demo())),
     );
   }
 

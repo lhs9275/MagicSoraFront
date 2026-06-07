@@ -1,4 +1,4 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
-KAKAO_NATIVE_APP_KEY_SCHEME=kakaoYOUR_NATIVE_APP_KEY
+KAKAO_NATIVE_APP_KEY_SCHEME=kakaof8cb26e197dd82be1594a682a0016f59
 #include? "KakaoKeys.xcconfig"

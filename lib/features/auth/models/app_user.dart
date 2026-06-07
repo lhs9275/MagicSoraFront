@@ -15,6 +15,24 @@ class AppUser {
     isDemo: true,
   );
 
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    final isDemo = json['isDemo'] == true;
+
+    return AppUser(
+      nickname: _cleanOrFallback(
+        json['nickname']?.toString(),
+        isDemo ? 'Sora Demo' : '사용자',
+      ),
+      email: _cleanOptional(json['email']?.toString()),
+      profileImageUrl: _cleanOptional(json['profileImageUrl']?.toString()),
+      loginProvider: _cleanOrFallback(
+        json['loginProvider']?.toString(),
+        isDemo ? '데모' : '일반',
+      ),
+      isDemo: isDemo,
+    );
+  }
+
   factory AppUser.demo({String? nickname, String? email}) {
     return AppUser(
       nickname: _cleanOrFallback(nickname, 'Sora Demo'),
@@ -42,6 +60,16 @@ class AppUser {
   final String? profileImageUrl;
   final String loginProvider;
   final bool isDemo;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'nickname': nickname,
+      'email': email,
+      'profileImageUrl': profileImageUrl,
+      'loginProvider': loginProvider,
+      'isDemo': isDemo,
+    };
+  }
 
   String get accountLabel {
     final rawEmail = email?.trim() ?? '';

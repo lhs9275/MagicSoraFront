@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
+import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
 
 const _accountSurface = Color(0xFFFFFFFF);
@@ -38,6 +38,8 @@ class AccountProfileScreen extends StatelessWidget {
         // 로컬 화면 전환은 계속 진행해 사용자가 세션에서 빠져나갈 수 있게 한다.
       }
     }
+
+    await AuthSessionStore.instance.clear();
 
     if (!context.mounted) {
       return;
