@@ -1,5 +1,6 @@
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/config/kakao_config.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
 
 class KakaoAuthController {
@@ -20,9 +21,33 @@ class KakaoAuthController {
         );
       }
 
-      return const LoginResult(isSuccess: true, message: '카카오 로그인에 성공했습니다.');
+      final user = await _fetchKakaoUserOrFallback();
+
+      return LoginResult(
+        isSuccess: true,
+        message: '${user.nickname}님, 카카오 로그인에 성공했습니다.',
+        user: user,
+      );
     } catch (error) {
       return LoginResult(isSuccess: false, message: _messageFor(error));
+    }
+  }
+
+  Future<AppUser> _fetchKakaoUserOrFallback() async {
+    try {
+      final kakaoUser = await UserApi.instance.me();
+      final account = kakaoUser.kakaoAccount;
+      final profile = account?.profile;
+      final profileImageUrl =
+          profile?.profileImageUrl ?? profile?.thumbnailImageUrl;
+
+      return AppUser.kakao(
+        nickname: profile?.nickname,
+        email: account?.email,
+        profileImageUrl: profileImageUrl,
+      );
+    } catch (_) {
+      return AppUser.kakao(nickname: null, email: null, profileImageUrl: null);
     }
   }
 

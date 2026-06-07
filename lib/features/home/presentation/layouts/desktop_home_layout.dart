@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.dart';
 
 class DesktopHomeLayout extends StatelessWidget {
   const DesktopHomeLayout({
     required this.questions,
+    required this.user,
     required this.questionController,
     required this.onSubmitQuestion,
     required this.onOpenAccount,
@@ -13,6 +15,7 @@ class DesktopHomeLayout extends StatelessWidget {
   static const designSize = Size(1180, 760);
 
   final List<String> questions;
+  final AppUser user;
   final TextEditingController questionController;
   final VoidCallback onSubmitQuestion;
   final VoidCallback onOpenAccount;
@@ -47,7 +50,10 @@ class DesktopHomeLayout extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                AccountShortcut(onTap: onOpenAccount),
+                                AccountShortcut(
+                                  user: user,
+                                  onTap: onOpenAccount,
+                                ),
                               ],
                             ),
                           ),

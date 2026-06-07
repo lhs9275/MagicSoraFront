@@ -1,19 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
 
-/// 데모 세션의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
+const _accountCanvas = Color(0xFFFBFCFA);
+const _accountSurface = Color(0xFFFFFFFF);
+const _accountSurfaceTint = Color(0xFFF7FAF8);
+const _accountAccent = Color(0xFF2E8F87);
+const _accountAccentSoft = Color(0xFFEAF6F3);
+const _accountLine = Color(0xFFE1ECE8);
+const _accountDanger = Color(0xFFC75E6E);
+const _accountDangerSoft = Color(0xFFFFF4F6);
+
+/// 로그인한 사용자의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
 class AccountProfileScreen extends StatelessWidget {
-  const AccountProfileScreen({super.key});
+  const AccountProfileScreen({super.key, AppUser? user})
+    : user = user ?? AppUser.fallback;
+
+  final AppUser user;
 
   void _showComingSoon(BuildContext context, String label) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('$label 기능은 준비 중입니다.')));
+    ).showSnackBar(SnackBar(content: Text('$label은 아직 준비 중입니다.')));
   }
 
-  void _handleLogout(BuildContext context) {
+  Future<void> _handleLogout(BuildContext context) async {
+    if (user.loginProvider == '카카오' && !user.isDemo) {
+      try {
+        await UserApi.instance.logout();
+      } catch (_) {
+        // 로컬 화면 전환은 계속 진행해 사용자가 세션에서 빠져나갈 수 있게 한다.
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => const MainMenuScreen()),
       (route) => false,
@@ -23,7 +49,8 @@ class AccountProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: OceanShellBackground(
+      backgroundColor: _accountCanvas,
+      body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 20.0;
@@ -42,9 +69,9 @@ class AccountProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const _ProfileTopBar(),
+                      _ProfileTopBar(user: user),
                       const SizedBox(height: 18),
-                      const _ProfileSummaryCard(),
+                      _ProfileSummaryCard(user: user),
                       const SizedBox(height: 18),
                       _ProfileMenuSection(
                         onMenuTap: (label) => _showComingSoon(context, label),
@@ -64,7 +91,9 @@ class AccountProfileScreen extends StatelessWidget {
 }
 
 class _ProfileTopBar extends StatelessWidget {
-  const _ProfileTopBar();
+  const _ProfileTopBar({required this.user});
+
+  final AppUser user;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +112,7 @@ class _ProfileTopBar extends StatelessWidget {
               Text('계정', style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 2),
               Text(
-                'Magic Sora',
+                user.isDemo ? '데모 세션' : '${user.loginProvider}로 로그인됨',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w800,
@@ -92,14 +121,16 @@ class _ProfileTopBar extends StatelessWidget {
             ],
           ),
         ),
-        const _DemoBadge(),
+        _DemoBadge(label: user.isDemo ? '데모' : user.loginProvider),
       ],
     );
   }
 }
 
 class _DemoBadge extends StatelessWidget {
-  const _DemoBadge();
+  const _DemoBadge({required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -107,32 +138,32 @@ class _DemoBadge extends StatelessWidget {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cream.withValues(alpha: 0.88),
+        color: _accountSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(color: _accountLine, width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryDark.withValues(alpha: 0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: _accountAccent.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            color: AppTheme.primaryDark,
+          const Icon(
+            Icons.verified_user_rounded,
+            color: _accountAccent,
             size: 16,
           ),
-          SizedBox(width: 6),
+          const SizedBox(width: 6),
           Text(
-            '데모',
-            style: TextStyle(
-              color: AppTheme.primaryDark,
+            label,
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
               fontSize: 13,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -142,24 +173,29 @@ class _DemoBadge extends StatelessWidget {
 }
 
 class _ProfileSummaryCard extends StatelessWidget {
-  const _ProfileSummaryCard();
+  const _ProfileSummaryCard({required this.user});
+
+  final AppUser user;
 
   @override
   Widget build(BuildContext context) {
     return OceanPanel(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
+      color: _accountSurface.withValues(alpha: 0.92),
+      borderColor: _accountLine,
+      showShadow: false,
       child: Column(
         children: [
           Row(
             children: [
-              const _ProfileAvatar(),
+              _ProfileAvatar(imageUrl: user.profileImageUrl),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sora Demo',
+                      user.nickname,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -169,7 +205,7 @@ class _ProfileSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'demo@magicsora.app',
+                      user.accountLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -181,16 +217,18 @@ class _ProfileSummaryCard extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: const [
+                      children: [
                         _ProfileBadge(
-                          icon: Icons.workspace_premium_rounded,
-                          label: '데모 세션',
-                          color: AppTheme.accentGold,
+                          icon: user.isDemo
+                              ? Icons.person_outline_rounded
+                              : Icons.account_circle_rounded,
+                          label: user.isDemo ? '데모 세션' : user.loginProvider,
+                          color: _accountAccent,
                         ),
-                        _ProfileBadge(
+                        const _ProfileBadge(
                           icon: Icons.check_circle_rounded,
                           label: '로그인 중',
-                          color: AppTheme.primaryTeal,
+                          color: _accountAccent,
                         ),
                       ],
                     ),
@@ -200,7 +238,7 @@ class _ProfileSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const _ProfileMetaStrip(),
+          _ProfileMetaStrip(user: user),
         ],
       ),
     );
@@ -208,7 +246,9 @@ class _ProfileSummaryCard extends StatelessWidget {
 }
 
 class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar();
+  const _ProfileAvatar({required this.imageUrl});
+
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -217,53 +257,91 @@ class _ProfileAvatar extends StatelessWidget {
       height: 84,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppTheme.cream,
+        color: _accountSurfaceTint,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 3),
+        border: Border.all(color: _accountAccentSoft, width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.shellPink.withValues(alpha: 0.18),
-            blurRadius: 18,
+            color: _accountAccent.withValues(alpha: 0.08),
+            blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Image.asset(
-        'assets/images/brand/magic_conch.png',
-        width: 68,
-        fit: BoxFit.contain,
-        semanticLabel: '마법의 소라고동 프로필 이미지',
-      ),
+      child: _ProfileAvatarImage(imageUrl: imageUrl),
     );
   }
 }
 
 class _ProfileMetaStrip extends StatelessWidget {
-  const _ProfileMetaStrip();
+  const _ProfileMetaStrip({required this.user});
+
+  final AppUser user;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.primaryBg.withValues(alpha: 0.82),
+        color: _accountSurfaceTint.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border.withValues(alpha: 0.72)),
+        border: Border.all(color: _accountLine),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
-            child: _ProfileMetaItem(label: '세션', value: '데모'),
+            child: _ProfileMetaItem(label: '로그인', value: user.loginProvider),
           ),
-          _MetaDivider(),
+          const _MetaDivider(),
           Expanded(
-            child: _ProfileMetaItem(label: '상태', value: '활성'),
+            child: _ProfileMetaItem(
+              label: '기록',
+              value: user.isDemo ? '데모' : '연결',
+            ),
           ),
-          _MetaDivider(),
-          Expanded(
+          const _MetaDivider(),
+          const Expanded(
             child: _ProfileMetaItem(label: '버전', value: '1.0'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatarImage extends StatelessWidget {
+  const _ProfileAvatarImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final profileUrl = imageUrl;
+
+    if (profileUrl == null) {
+      return Image.asset(
+        'assets/images/brand/magic_conch.png',
+        width: 68,
+        fit: BoxFit.contain,
+        semanticLabel: '마법의 소라고동 프로필 이미지',
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Image.network(
+        profileUrl,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/brand/magic_conch.png',
+            width: 68,
+            fit: BoxFit.contain,
+            semanticLabel: '마법의 소라고동 프로필 이미지',
+          );
+        },
       ),
     );
   }
@@ -284,7 +362,7 @@ class _ProfileMetaItem extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppTheme.primaryDark,
+            color: _accountAccent,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -313,7 +391,7 @@ class _MetaDivider extends StatelessWidget {
       width: 1,
       height: 34,
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: AppTheme.border.withValues(alpha: 0.8),
+      color: _accountLine.withValues(alpha: 0.9),
     );
   }
 }
@@ -331,18 +409,14 @@ class _ProfileBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = color == AppTheme.accentGold
-        ? AppTheme.primaryDark
-        : AppTheme.textPrimary;
+    final foreground = Color.lerp(color, AppTheme.textPrimary, 0.2)!;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(
-          alpha: color == AppTheme.accentGold ? 0.66 : 0.14,
-        ),
+        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -372,7 +446,9 @@ class _ProfileMenuSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return OceanPanel(
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-      color: Colors.white.withValues(alpha: 0.74),
+      color: _accountSurface.withValues(alpha: 0.9),
+      borderColor: _accountLine,
+      showShadow: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -394,16 +470,16 @@ class _ProfileMenuSection extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 11),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppTheme.cream.withValues(alpha: 0.78),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.white),
+                    color: _accountAccentSoft.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+                    border: Border.all(color: _accountLine),
                   ),
                   child: Text(
-                    '5개',
+                    '준비 중',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.primaryDark,
+                      color: _accountAccent,
                       fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -425,21 +501,21 @@ class _ProfileMenuSection extends StatelessWidget {
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
-            icon: Icons.notifications_rounded,
+            icon: Icons.notifications_none_rounded,
             title: '알림 설정',
             subtitle: '토론 완료와 세션 업데이트 알림을 관리합니다.',
             onTap: () => onMenuTap('알림 설정'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
-            icon: Icons.help_rounded,
+            icon: Icons.help_outline_rounded,
             title: '도움말',
             subtitle: '토론 방식과 점수 계산 기준을 확인합니다.',
             onTap: () => onMenuTap('도움말'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
-            icon: Icons.info_rounded,
+            icon: Icons.info_outline_rounded,
             title: '앱 정보',
             subtitle: 'Magic Sora Debate 데모 버전입니다.',
             onTap: () => onMenuTap('앱 정보'),
@@ -469,6 +545,8 @@ class _ProfileMenuTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
+        highlightColor: _accountAccentSoft.withValues(alpha: 0.44),
+        splashColor: _accountAccent.withValues(alpha: 0.1),
         onTap: onTap,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 70),
@@ -477,15 +555,15 @@ class _ProfileMenuTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 42,
+                  height: 42,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppTheme.cream.withValues(alpha: 0.64),
+                    color: _accountSurfaceTint.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white, width: 1.2),
+                    border: Border.all(color: _accountLine, width: 1),
                   ),
-                  child: Icon(icon, color: AppTheme.primaryDark, size: 21),
+                  child: Icon(icon, color: _accountAccent, size: 21),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -496,7 +574,8 @@ class _ProfileMenuTile extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -510,16 +589,21 @@ class _ProfileMenuTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  width: 30,
-                  height: 30,
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 9),
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.58),
-                    borderRadius: BorderRadius.circular(12),
+                    color: _accountSurfaceTint.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: _accountLine),
                   ),
-                  child: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppTheme.textSecondary,
-                    size: 20,
+                  child: const Text(
+                    '준비',
+                    style: TextStyle(
+                      color: _accountAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -538,7 +622,7 @@ class _MenuDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       height: 1,
-      color: Colors.white.withValues(alpha: 0.68),
+      color: _accountLine.withValues(alpha: 0.6),
       indent: 64,
       endIndent: 8,
     );
@@ -562,28 +646,28 @@ class _LogoutButton extends StatelessWidget {
           height: 52,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppTheme.cream.withValues(alpha: 0.72),
+            color: _accountDangerSoft.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white, width: 1.4),
+            border: Border.all(color: _accountDanger.withValues(alpha: 0.28)),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryDark.withValues(alpha: 0.07),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
+                color: _accountDanger.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.logout_rounded, color: AppTheme.primaryDark, size: 20),
+              Icon(Icons.logout_rounded, color: _accountDanger, size: 20),
               SizedBox(width: 8),
               Text(
                 '로그아웃',
                 style: TextStyle(
-                  color: AppTheme.primaryDark,
+                  color: _accountDanger,
                   fontSize: 16,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -610,26 +694,28 @@ class _IconActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: AppTheme.cream.withValues(alpha: 0.86),
+        color: _accountSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
+          highlightColor: _accountAccentSoft.withValues(alpha: 0.52),
+          splashColor: _accountAccent.withValues(alpha: 0.12),
           onTap: onPressed,
           child: Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: _accountLine, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryDark.withValues(alpha: 0.08),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
+                  color: _accountAccent.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
-            child: Icon(icon, color: AppTheme.primaryDark),
+            child: Icon(icon, color: AppTheme.textPrimary),
           ),
         ),
       ),

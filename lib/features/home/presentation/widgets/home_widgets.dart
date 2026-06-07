@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 
 const _historyRowText = AppTheme.textPrimary;
 const _historyRowSecondary = AppTheme.textSecondary;
@@ -97,8 +98,10 @@ class HistoryTile extends StatelessWidget {
 }
 
 class AccountShortcut extends StatelessWidget {
-  const AccountShortcut({required this.onTap, super.key});
+  const AccountShortcut({required this.onTap, super.key, AppUser? user})
+    : user = user ?? AppUser.fallback;
 
+  final AppUser user;
   final VoidCallback onTap;
 
   @override
@@ -137,7 +140,9 @@ class AccountShortcut extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Sora Demo',
+                      user.nickname,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -210,6 +215,9 @@ class QuestionInputPanel extends StatelessWidget {
 
         return OceanPanel(
           padding: EdgeInsets.all(isCompact ? 8 : 10),
+          color: Colors.white.withValues(alpha: 0.86),
+          borderColor: AppTheme.skyBlue.withValues(alpha: 0.5),
+          radius: 30,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -235,24 +243,24 @@ class QuestionInputPanel extends StatelessWidget {
                       ),
                       contentPadding: const EdgeInsets.fromLTRB(2, 15, 16, 15),
                       filled: true,
-                      fillColor: AppTheme.cream.withValues(alpha: 0.9),
+                      fillColor: Colors.white.withValues(alpha: 0.94),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(28),
                         borderSide: BorderSide(
-                          color: AppTheme.border.withValues(alpha: 0.7),
+                          color: AppTheme.skyBlue.withValues(alpha: 0.28),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(28),
                         borderSide: BorderSide(
-                          color: AppTheme.border.withValues(alpha: 0.7),
+                          color: AppTheme.skyBlue.withValues(alpha: 0.28),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(28),
                         borderSide: const BorderSide(
                           color: AppTheme.primaryTeal,
-                          width: 1.6,
+                          width: 1.8,
                         ),
                       ),
                     ),

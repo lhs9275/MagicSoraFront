@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
 /// 인증이 완료되면 토론 대시보드로 이동한다.
@@ -59,13 +60,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const MagicConchHomeScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => MagicConchHomeScreen(
+          user:
+              result.user ?? AppUser.demo(email: _emailController.text.trim()),
+        ),
+      ),
     );
   }
 
   void _openPreview() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const MagicConchHomeScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => MagicConchHomeScreen(user: AppUser.demo()),
+      ),
     );
   }
 

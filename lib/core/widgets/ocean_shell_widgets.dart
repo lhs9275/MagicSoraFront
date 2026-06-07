@@ -21,12 +21,12 @@ class OceanShellBackground extends StatelessWidget {
           begin: Alignment(-0.9, -1),
           end: Alignment(0.88, 1),
           colors: [
-            Color(0xFFF7FCFA),
-            Color(0xFFB8ECEB),
-            Color(0xFFE0F5E7),
-            Color(0xFFFFF2D6),
+            AppTheme.primaryBg,
+            Color(0xFFC7F3ED),
+            Color(0xFFFFF6D9),
+            Color(0xFFFFE8F2),
           ],
-          stops: [0, 0.34, 0.72, 1],
+          stops: [0, 0.38, 0.76, 1],
         ),
       ),
       child: Stack(
@@ -46,12 +46,18 @@ class OceanPanel extends StatelessWidget {
     this.padding = const EdgeInsets.all(20),
     this.margin,
     this.color,
+    this.borderColor,
+    this.radius = AppTheme.panelRadius,
+    this.showShadow = true,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
   final Color? color;
+  final Color? borderColor;
+  final double radius;
+  final bool showShadow;
 
   @override
   Widget build(BuildContext context) {
@@ -60,24 +66,26 @@ class OceanPanel extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(26),
+        color: color ?? AppTheme.surfaceCard.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.68),
-          width: 1.2,
+          color: borderColor ?? AppTheme.glassBorder.withValues(alpha: 0.58),
+          width: 1.1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryDark.withValues(alpha: 0.1),
-            blurRadius: 36,
-            offset: const Offset(0, 18),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.42),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: showShadow
+            ? [
+                BoxShadow(
+                  color: AppTheme.shadowTint.withValues(alpha: 0.08),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: AppTheme.cream.withValues(alpha: 0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ]
+            : null,
       ),
       child: child,
     );
@@ -97,6 +105,7 @@ class OceanPillButton extends StatelessWidget {
     this.showBorder = true,
     this.showShadow = true,
     this.useGradient = true,
+    this.borderRadius = AppTheme.softControlRadius,
   });
 
   final String label;
@@ -109,42 +118,55 @@ class OceanPillButton extends StatelessWidget {
   final bool showBorder;
   final bool showShadow;
   final bool useGradient;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
+    final startColor = Color.lerp(backgroundColor, Colors.white, 0.18)!;
+    final endColor = Color.lerp(backgroundColor, AppTheme.accentLight, 0.1)!;
+    final shadowColor = Color.lerp(backgroundColor, AppTheme.skyBlue, 0.18)!;
+    final radius = BorderRadius.circular(borderRadius);
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 160),
       opacity: enabled ? 1 : 0.64,
       child: SizedBox(
         width: double.infinity,
-        child: DecoratedBox(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
             color: useGradient ? null : backgroundColor,
             gradient: useGradient
                 ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      backgroundColor.withValues(alpha: 0.96),
-                      backgroundColor,
-                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [startColor, endColor],
                   )
                 : null,
-            borderRadius: BorderRadius.circular(999),
-            border: showBorder ? Border.all(color: Colors.white, width: 3) : null,
+            borderRadius: radius,
+            border: showBorder
+                ? Border.all(
+                    color: Color.lerp(
+                      backgroundColor,
+                      Colors.white,
+                      0.44,
+                    )!.withValues(alpha: 0.72),
+                    width: 1.1,
+                  )
+                : null,
             boxShadow: showShadow
                 ? [
                     BoxShadow(
-                      color: backgroundColor.withValues(alpha: 0.34),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                      color: shadowColor.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: AppTheme.primaryDark.withValues(alpha: 0.18),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      color: Colors.white.withValues(alpha: 0.42),
+                      blurRadius: 4,
+                      offset: const Offset(0, -1),
                     ),
                   ]
                 : null,
@@ -152,20 +174,17 @@ class OceanPillButton extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: radius,
+              hoverColor: Colors.white.withValues(alpha: 0.12),
+              focusColor: Colors.white.withValues(alpha: 0.16),
+              splashColor: Colors.white.withValues(alpha: 0.18),
+              highlightColor: AppTheme.skyBlue.withValues(alpha: 0.12),
               onTap: enabled ? onPressed : null,
               child: SizedBox(
-                height: 58,
+                height: 54,
                 child: Center(
                   child: isLoading
-                      ? SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: foregroundColor,
-                          ),
-                        )
+                      ? _ButtonLoadingIndicator(color: foregroundColor)
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -181,7 +200,8 @@ class OceanPillButton extends StatelessWidget {
                                 style: TextStyle(
                                   color: foregroundColor,
                                   fontSize: fontSize,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0,
                                 ),
                               ),
                             ),
@@ -189,6 +209,32 @@ class OceanPillButton extends StatelessWidget {
                         ),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ButtonLoadingIndicator extends StatelessWidget {
+  const _ButtonLoadingIndicator({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '처리 중',
+      child: SizedBox(
+        width: 46,
+        height: 5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppTheme.pillRadius),
+          child: LinearProgressIndicator(
+            backgroundColor: color.withValues(alpha: 0.16),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              color.withValues(alpha: 0.78),
             ),
           ),
         ),
@@ -233,6 +279,13 @@ class ShellTextField extends StatelessWidget {
       controller: controller,
       validator: validator,
       obscureText: obscureText,
+      cursorColor: AppTheme.primaryTeal,
+      style: const TextStyle(
+        color: AppTheme.textPrimary,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        height: 1.34,
+      ),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
@@ -272,8 +325,8 @@ class _OceanWashPainter extends CustomPainter {
       bandHeight: size.height * 0.16,
       amplitude: size.height * 0.035,
       colors: [
-        Colors.white.withValues(alpha: 0.22),
-        const Color(0xFF7BD9D5).withValues(alpha: 0.16),
+        Colors.white.withValues(alpha: 0.18),
+        AppTheme.primaryLight.withValues(alpha: 0.13),
       ],
     );
     _paintWaveBand(
@@ -283,8 +336,8 @@ class _OceanWashPainter extends CustomPainter {
       bandHeight: size.height * 0.2,
       amplitude: size.height * 0.045,
       colors: [
-        Colors.white.withValues(alpha: 0.18),
-        const Color(0xFFFFDFAE).withValues(alpha: 0.22),
+        Colors.white.withValues(alpha: 0.15),
+        AppTheme.accentLight.withValues(alpha: 0.2),
       ],
     );
     _paintSurfaceLines(canvas, size);
@@ -294,10 +347,14 @@ class _OceanWashPainter extends CustomPainter {
   void _paintTopLight(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final paint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0x66FFFFFF), Color(0x1A86D9D7), Color(0x00FFFFFF)],
+        colors: [
+          Colors.white.withValues(alpha: 0.64),
+          AppTheme.primaryLight.withValues(alpha: 0.18),
+          Colors.white.withValues(alpha: 0),
+        ],
         stops: [0, 0.42, 1],
       ).createShader(rect);
 
@@ -367,9 +424,9 @@ class _OceanWashPainter extends CustomPainter {
     final width = size.width;
     final height = size.height;
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.22)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3
+      ..strokeWidth = 1.1
       ..strokeCap = StrokeCap.round;
 
     for (var index = 0; index < 7; index += 1) {
@@ -411,7 +468,7 @@ class _OceanWashPainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: [
           Colors.white.withValues(alpha: 0),
-          const Color(0xFFFFF0D4).withValues(alpha: 0.48),
+          AppTheme.cream.withValues(alpha: 0.52),
         ],
       ).createShader(rect);
 

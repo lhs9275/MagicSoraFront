@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/account/presentation/screens/account_profile_screen.dart';
 import 'package:magicsorafront/features/home/presentation/layouts/desktop_home_layout.dart';
 import 'package:magicsorafront/features/home/presentation/layouts/mobile_home_layout.dart';
@@ -7,7 +8,9 @@ import 'package:magicsorafront/features/home/presentation/screens/magic_conch_re
 import 'package:magicsorafront/features/home/presentation/screens/question_history_screen.dart';
 
 class MagicConchHomeScreen extends StatefulWidget {
-  const MagicConchHomeScreen({super.key});
+  const MagicConchHomeScreen({super.key, this.user});
+
+  final AppUser? user;
 
   @override
   State<MagicConchHomeScreen> createState() => _MagicConchHomeScreenState();
@@ -15,6 +18,7 @@ class MagicConchHomeScreen extends StatefulWidget {
 
 class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   final _questionController = TextEditingController();
+  AppUser get _currentUser => widget.user ?? AppUser.fallback;
 
   // TODO: 실제 질문 기록 데이터가 생기면 서버/로컬 저장소에서 불러오도록 교체한다.
   final List<String> _questionHistory = const [
@@ -63,7 +67,9 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
 
   void _openAccount() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const AccountProfileScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => AccountProfileScreen(user: _currentUser),
+      ),
     );
   }
 
@@ -93,6 +99,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
 
             return DesktopHomeLayout(
               questions: _questionHistory,
+              user: _currentUser,
               questionController: _questionController,
               onSubmitQuestion: _openResult,
               onOpenAccount: _openAccount,

@@ -1,45 +1,64 @@
 import 'package:flutter/material.dart';
 
-/// 모던한 바다 톤과 조개 포인트 컬러를 앱 전체에 입히는 기본 테마다.
+/// 바다/조개 브랜드를 유지하되 토론 도구답게 차분한 제품 톤을 제공한다.
 class AppTheme {
   const AppTheme._();
 
-  static const primaryTeal = Color(0xFF28B9B8);
-  static const primaryLight = Color(0xFF77E1D8);
-  static const primaryDark = Color(0xFF0E8B92);
-  static const primaryBg = Color(0xFFF7FCFA);
-  static const accentGold = Color(0xFFFFDF55);
-  static const accentLight = Color(0xFFFFF09A);
-  static const accentDark = Color(0xFFE9B91E);
-  static const coral = Color(0xFFFF7B8F);
-  static const coralLight = Color(0xFFFFA4BC);
-  static const coralDark = Color(0xFFE95678);
-  static const shellPink = Color(0xFFFF8FD2);
-  static const shellPurple = Color(0xFFB58BFF);
+  static const primaryTeal = Color(0xFF22B8B7);
+  static const primaryLight = Color(0xFF96E5DE);
+  static const primaryDark = Color(0xFF167A83);
+  static const primaryBg = Color(0xFFF9FDF8);
+  static const accentGold = Color(0xFFFFDC5B);
+  static const accentLight = Color(0xFFFFEE9D);
+  static const accentDark = Color(0xFFE1AD19);
+  static const coral = Color(0xFFFF8194);
+  static const coralLight = Color(0xFFFFAEC0);
+  static const coralDark = Color(0xFFE75E7A);
+  static const shellPink = Color(0xFFFF8FCC);
+  static const shellPurple = Color(0xFFC0A0FF);
   static const cream = Color(0xFFFFFAE8);
-  static const skyBlue = Color(0xFF68CFF4);
-  static const surfaceBase = Color(0xFFF1FAF7);
-  static const surfaceCard = Color(0xFFFFFFFF);
-  static const success = Color(0xFF27AE60);
-  static const error = Color(0xFFE74C3C);
-  static const textPrimary = Color(0xFF173D3A);
-  static const textSecondary = Color(0xFF5D716E);
-  static const border = Color(0xFFD6ECEA);
+  static const skyBlue = Color(0xFF6BD1F0);
+  static const surfaceBase = Color(0xFFF1FAF5);
+  static const surfaceCard = Color(0xFFFFFEF8);
+  static const surfaceRaised = Color(0xFFFFFFFF);
+  static const surfaceMuted = Color(0xFFEAF8F4);
+  static const success = Color(0xFF28A76E);
+  static const error = Color(0xFFE55A50);
+  static const textPrimary = Color(0xFF174B4D);
+  static const textSecondary = Color(0xFF5F7774);
+  static const textTertiary = Color(0xFF8CA39F);
+  static const border = Color(0xFFDCEBE5);
+  static const borderStrong = Color(0xFFBEE2DB);
+  static const glassBorder = Color(0xFFD9ECE7);
+  static const shadowTint = Color(0xFF1FA6A5);
+
+  static const panelRadius = 26.0;
+  static const controlRadius = 22.0;
+  static const softControlRadius = 28.0;
+  static const pillRadius = 999.0;
 
   static ThemeData light() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primaryTeal,
       brightness: Brightness.light,
       primary: primaryTeal,
-      secondary: accentGold,
-      surface: surfaceCard,
+      onPrimary: Colors.white,
+      primaryContainer: primaryLight,
+      secondary: shellPink,
+      onSecondary: Colors.white,
+      secondaryContainer: accentLight,
+      surface: surfaceRaised,
+      onSurface: textPrimary,
+      surfaceContainerHighest: surfaceMuted,
       error: error,
+      onError: Colors.white,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: primaryBg,
+      canvasColor: primaryBg,
       fontFamilyFallback: const [
         'Apple SD Gothic Neo',
         'Noto Sans KR',
@@ -54,93 +73,127 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: textPrimary,
           fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: cream,
-        hintStyle: const TextStyle(color: Color(0xFF9BA9A6), fontSize: 16),
+        fillColor: surfaceRaised,
+        hintStyle: const TextStyle(color: textTertiary, fontSize: 15),
         labelStyle: const TextStyle(
           color: textSecondary,
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
+        prefixIconColor: textTertiary,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: const BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: const BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: primaryTeal, width: 2),
+          borderRadius: BorderRadius.circular(controlRadius),
+          borderSide: const BorderSide(color: primaryTeal, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: const BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: error, width: 2),
+          borderRadius: BorderRadius.circular(controlRadius),
+          borderSide: const BorderSide(color: error, width: 1.6),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
+          horizontal: 16,
+          vertical: 15,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accentGold,
-          foregroundColor: primaryDark,
-          disabledBackgroundColor: const Color(0xFFE7DFBF),
-          disabledForegroundColor: const Color(0xFF8D8468),
+          foregroundColor: textPrimary,
+          disabledBackgroundColor: border,
+          disabledForegroundColor: textTertiary,
           elevation: 0,
-          minimumSize: const Size.fromHeight(58),
-          shadowColor: accentGold.withValues(alpha: 0.38),
-          shape: const StadiumBorder(),
+          minimumSize: const Size.fromHeight(54),
+          shadowColor: shadowTint.withValues(alpha: 0.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(controlRadius),
+          ),
           textStyle: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.2,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryDark,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          foregroundColor: primaryTeal,
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
         ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: primaryTeal,
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          height: 1.4,
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(controlRadius),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: border.withValues(alpha: 0.72),
+        thickness: 1,
+        space: 1,
       ),
       textTheme: const TextTheme(
         displaySmall: TextStyle(
-          fontSize: 42,
-          fontWeight: FontWeight.w900,
-          height: 1.22,
-          letterSpacing: 1.2,
+          fontSize: 40,
+          fontWeight: FontWeight.w800,
+          height: 1.12,
+          letterSpacing: 0,
           color: textPrimary,
         ),
         headlineSmall: TextStyle(
           fontSize: 26,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.4,
+          fontWeight: FontWeight.w800,
+          height: 1.18,
+          letterSpacing: 0,
           color: textPrimary,
         ),
         titleLarge: TextStyle(
           fontSize: 18,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
+          height: 1.28,
           color: textPrimary,
         ),
         titleMedium: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
+          height: 1.32,
           color: textPrimary,
         ),
-        bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: textSecondary),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: textSecondary),
+        bodyLarge: TextStyle(fontSize: 16, height: 1.52, color: textSecondary),
+        bodyMedium: TextStyle(fontSize: 14, height: 1.46, color: textSecondary),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          color: textPrimary,
+        ),
       ),
     );
   }

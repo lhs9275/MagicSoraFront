@@ -1,3 +1,4 @@
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
 
 /// 로그인 화면에서 사용하는 입력 검증과 임시 인증 흐름을 담당한다.
@@ -50,6 +51,10 @@ class LoginController {
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
 
-    return LoginResult(isSuccess: true, message: '$email 계정으로 데모 세션에 진입합니다.');
+    return LoginResult(
+      isSuccess: true,
+      message: '$email 계정으로 데모 세션에 진입합니다.',
+      user: AppUser.demo(nickname: 'Sora Demo', email: email),
+    );
   }
 }

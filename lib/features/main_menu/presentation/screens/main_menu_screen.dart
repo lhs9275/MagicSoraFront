@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/kakao_auth_controller.dart';
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
@@ -44,7 +45,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const MagicConchHomeScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            MagicConchHomeScreen(user: result.user ?? AppUser.fallback),
+      ),
     );
   }
 
