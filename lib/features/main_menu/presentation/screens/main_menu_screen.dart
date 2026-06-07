@@ -61,6 +61,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 20.0;
             final topPadding = constraints.maxHeight < 640 ? 112.0 : 172.0;
             final bottomPadding = constraints.maxHeight < 640 ? 72.0 : 98.0;
+            final loginBottomPadding = bottomPadding + 14;
+            final brandAlignment = constraints.maxHeight < 640
+                ? const Alignment(0, -0.3)
+                : const Alignment(0, -0.42);
             const loginAreaHeight = 56.0;
             final minHeight =
                 constraints.maxHeight -
@@ -90,7 +94,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           minHeight: minHeight > 0 ? minHeight : 0,
                         ),
                         child: Align(
-                          alignment: Alignment.center,
+                          alignment: brandAlignment,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 480),
                             child: const _BrandBlock(),
@@ -102,7 +106,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: EdgeInsets.only(bottom: bottomPadding),
+                      padding: EdgeInsets.only(bottom: loginBottomPadding),
                       child: _KakaoLoginButton(
                         isLoading: _isKakaoSubmitting,
                         onPressed: _submitKakaoLogin,
@@ -137,7 +141,7 @@ class _BrandBlock extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isTight = constraints.maxWidth < 340;
-          final targetConchWidth = isTight ? 252.0 : 296.0;
+          final targetConchWidth = isTight ? 276.0 : 332.0;
           final availableWidth = constraints.maxWidth.isFinite
               ? constraints.maxWidth
               : targetConchWidth;
@@ -148,6 +152,20 @@ class _BrandBlock extends StatelessWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Transform.translate(
+                offset: Offset(0, isTight ? -38 : -52),
+                child: Text(
+                  'Magic Sora',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: AppTheme.primaryDark,
+                    fontSize: isTight ? 36 : 44,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
               Image.asset(
                 'assets/images/brand/magic_conch.png',
                 width: conchWidth,

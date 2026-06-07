@@ -6,16 +6,21 @@ import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
 
 const _accountSurface = Color(0xFFFFFFFF);
-const _accountSurfaceWash = Color(0xFFFFF7FB);
-const _accountAccent = Color(0xFFFF8FB4);
-const _accountAccentStrong = Color(0xFFE95D91);
-const _accountSky = Color(0xFF7BD7FF);
-const _accountWarm = Color(0xFFFFF0B6);
-const _accountLine = Color(0xFFF0DCE8);
-const _accountText = Color(0xFF4F4051);
-const _accountTextMuted = Color(0xFF8B7283);
+const _accountSurfaceSoft = Color(0xFFF7FBFF);
+const _accountSurfaceLavender = Color(0xFFF1F4FF);
+const _accountLine = Color(0xFFDCE5F2);
+const _accountLineStrong = Color(0xFFC7D4E9);
+const _accountText = Color(0xFF30476D);
+const _accountTextMuted = Color(0xFF6C7C9B);
+const _accountTeal = Color(0xFF75D6E6);
+const _accountTealStrong = Color(0xFF4A69AA);
+const _accountSky = Color(0xFFC8D2FF);
+const _accountGold = Color(0xFFF6DE88);
+const _accountIconBgTop = Color(0xFFF9FBFF);
+const _accountIconBgBottom = Color(0xFFEBF1FF);
 const _accountDanger = Color(0xFFC75E6E);
-const _accountDangerSoft = Color(0xFFFFF4F6);
+const _accountDangerSoft = Color(0xFFFFF5F6);
+const _accountSheetBarrier = Color(0x332B4B80);
 
 /// 로그인한 사용자의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
 class AccountProfileScreen extends StatelessWidget {
@@ -51,6 +56,22 @@ class AccountProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _showAccountDetails(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: _accountSheetBarrier,
+      isScrollControlled: false,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: _AccountDetailsSheet(user: user),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,9 +96,10 @@ class AccountProfileScreen extends StatelessWidget {
                     children: [
                       _ProfileTopBar(user: user),
                       const SizedBox(height: 18),
-                      _ProfileHero(user: user),
-                      const SizedBox(height: 14),
-                      _AccountDetailsPanel(user: user),
+                      _ProfileHero(
+                        user: user,
+                        onTap: () => _showAccountDetails(context),
+                      ),
                       const SizedBox(height: 14),
                       _ProfileMenuSection(
                         onMenuTap: (label) => _showComingSoon(context, label),
@@ -103,6 +125,8 @@ class _ProfileTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subtitle = user.isDemo ? '데모 세션 연결됨' : '${user.loginProvider} 계정 연결됨';
+
     return Row(
       children: [
         _IconActionButton(
@@ -125,7 +149,7 @@ class _ProfileTopBar extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                user.isDemo ? '데모 세션으로 이용 중' : '${user.loginProvider} 계정 연결됨',
+                subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -136,154 +160,166 @@ class _ProfileTopBar extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        _ProviderMark(label: user.isDemo ? 'DEMO' : user.loginProvider),
       ],
     );
   }
 }
 
-class _ProviderMark extends StatelessWidget {
-  const _ProviderMark({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_accountWarm, _accountAccent],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.86)),
-        boxShadow: [
-          BoxShadow(
-            color: _accountAccent.withValues(alpha: 0.22),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: _accountText,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.7,
-        ),
-      ),
-    );
-  }
-}
-
 class _ProfileHero extends StatelessWidget {
-  const _ProfileHero({required this.user});
+  const _ProfileHero({required this.user, required this.onTap});
 
   final AppUser user;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final sessionCopy = user.isDemo
-        ? '토론 기록은 데모 세션 기준으로 표시됩니다.'
-        : '계정 연결 상태가 정상입니다.';
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: _accountSurface.withValues(alpha: 0.82),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.84)),
-        boxShadow: [
-          BoxShadow(
-            color: _accountAccent.withValues(alpha: 0.18),
-            blurRadius: 30,
-            offset: const Offset(0, 18),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.72),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -24,
-            top: -36,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _accountSky.withValues(alpha: 0.36),
-                shape: BoxShape.circle,
-              ),
-              child: const SizedBox(width: 118, height: 118),
+        highlightColor: _accountTeal.withValues(alpha: 0.06),
+        splashColor: _accountTeal.withValues(alpha: 0.08),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.92)),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.86),
+                Colors.white.withValues(alpha: 0.72),
+              ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ProfileAvatar(
-                    imageUrl: user.profileImageUrl,
-                    providerLabel: user.isDemo ? '데모' : user.loginProvider,
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.nickname,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.displaySmall
-                                ?.copyWith(
-                                  color: _accountText,
-                                  fontSize: 31,
-                                  height: 1.08,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            user.accountLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: _accountTextMuted,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x334C8ED4),
+                blurRadius: 30,
+                offset: const Offset(0, 18),
               ),
-              const SizedBox(height: 22),
-              _SessionStatusStrip(
-                title: user.isDemo ? '데모 모드' : '로그인 유지 중',
-                subtitle: sessionCopy,
-                icon: user.isDemo
-                    ? Icons.person_outline_rounded
-                    : Icons.verified_rounded,
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.78),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
               ),
             ],
           ),
-        ],
+          child: Stack(
+            children: [
+              Positioned(
+                right: -24,
+                top: -30,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _accountSky.withValues(alpha: 0.42),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const SizedBox(width: 128, height: 128),
+                ),
+              ),
+              Positioned(
+                left: -12,
+                right: -12,
+                bottom: -52,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.52),
+                        _accountTeal.withValues(alpha: 0.12),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const SizedBox(height: 96),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ProfileAvatar(
+                          imageUrl: user.profileImageUrl,
+                          providerLabel: user.isDemo
+                              ? '데모'
+                              : user.loginProvider,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.nickname,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        color: _accountText,
+                                        fontSize: 31,
+                                        height: 1.04,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '질문기록 연결됨',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: _accountTextMuted,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                const SizedBox(height: 10),
+                                _HeroStatusPill(
+                                  label: user.isDemo
+                                      ? '데모 세션'
+                                      : '${user.loginProvider} 로그인됨',
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _accountEmail(user),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: _accountText,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    _SessionStatusStrip(
+                      title: '계정 상세',
+                      subtitle: user.isDemo
+                          ? '세션 정보와 연결 상태 보기'
+                          : '카카오 로그인과 이메일 보기',
+                      icon: user.isDemo
+                          ? Icons.person_outline_rounded
+                          : Icons.verified_rounded,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -301,32 +337,53 @@ class _ProfileAvatar extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 94,
-          height: 94,
+          width: 92,
+          height: 92,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _accountSurfaceWash,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [_accountSurface, _accountSurfaceLavender],
+            ),
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: _accountLine, width: 1.2),
-            boxShadow: [
+            border: Border.all(color: Colors.white.withValues(alpha: 0.96)),
+            boxShadow: const [
               BoxShadow(
-                color: _accountAccent.withValues(alpha: 0.2),
-                blurRadius: 22,
-                offset: const Offset(0, 12),
+                color: Color(0x224C8ED4),
+                blurRadius: 24,
+                offset: Offset(0, 12),
               ),
             ],
           ),
-          child: _ProfileAvatarImage(imageUrl: imageUrl),
+          child: Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_accountSurfaceSoft, _accountSurfaceLavender],
+              ),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            alignment: Alignment.center,
+            child: _ProfileAvatarImage(imageUrl: imageUrl),
+          ),
         ),
         Positioned(
-          right: -6,
-          bottom: -7,
+          right: -4,
+          bottom: -6,
           child: Container(
-            height: 27,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: _accountWarm,
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [_accountGold, _accountSurfaceLavender],
+              ),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white, width: 2),
             ),
@@ -335,7 +392,7 @@ class _ProfileAvatar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: _accountText,
+                color: _accountTealStrong,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
@@ -361,11 +418,11 @@ class _ProfileAvatarImage extends StatelessWidget {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(20),
       child: Image.network(
         profileUrl,
-        width: 82,
-        height: 82,
+        width: 68,
+        height: 68,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return const _FallbackAvatarAsset();
@@ -382,9 +439,39 @@ class _FallbackAvatarAsset extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/images/brand/magic_conch.png',
-      width: 72,
+      width: 60,
       fit: BoxFit.contain,
       semanticLabel: '마법의 소라고동 프로필 이미지',
+    );
+  }
+}
+
+class _HeroStatusPill extends StatelessWidget {
+  const _HeroStatusPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [_accountIconBgTop, _accountIconBgBottom],
+        ),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _accountLineStrong),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: _accountTealStrong,
+          fontWeight: FontWeight.w900,
+          height: 1.1,
+        ),
+      ),
     );
   }
 }
@@ -402,185 +489,70 @@ class _SessionStatusStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _accountAccent.withValues(alpha: 0.11),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: _accountAccentStrong, size: 21),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: _accountText,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _accountTextMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AccountDetailsPanel extends StatelessWidget {
-  const _AccountDetailsPanel({required this.user});
-
-  final AppUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    return OceanPanel(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-      color: _accountSurface.withValues(alpha: 0.9),
-      borderColor: Colors.white.withValues(alpha: 0.72),
-      radius: 24,
-      showShadow: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PanelHeader(title: '계정 상세', trailing: user.isDemo ? '임시' : '연결됨'),
-          const SizedBox(height: 14),
-          _DetailRow(
-            icon: Icons.account_circle_outlined,
-            label: '로그인 방식',
-            value: user.loginProvider,
-          ),
-          const _DetailDivider(),
-          _DetailRow(
-            icon: Icons.alternate_email_rounded,
-            label: '이메일',
-            value: user.email?.trim().isNotEmpty == true
-                ? user.email!
-                : '등록된 이메일 없음',
-          ),
-          const _DetailDivider(),
-          _DetailRow(
-            icon: Icons.folder_open_rounded,
-            label: '기록 상태',
-            value: user.isDemo ? '데모 기록' : '계정 기록 연결',
-          ),
-          const _DetailDivider(),
-          const _DetailRow(
-            icon: Icons.auto_awesome_rounded,
-            label: '앱 버전',
-            value: '1.0',
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _accountLineStrong.withValues(alpha: 0.88)),
       ),
-    );
-  }
-}
-
-class _PanelHeader extends StatelessWidget {
-  const _PanelHeader({required this.title, required this.trailing});
-
-  final String title;
-  final String trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(color: _accountText, fontSize: 18),
-          ),
-        ),
-        Text(
-          trailing,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: _accountAccentStrong,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Icon(icon, color: _accountAccentStrong, size: 21),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _accountTextMuted,
-                fontWeight: FontWeight.w800,
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_accountIconBgTop, _accountIconBgBottom],
               ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _accountLineStrong),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x184C8ED4),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: _accountTealStrong, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _accountText,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _accountTextMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
-            flex: 2,
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _accountText,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: _accountTextMuted,
+            size: 22,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DetailDivider extends StatelessWidget {
-  const _DetailDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      color: _accountLine.withValues(alpha: 0.7),
-      indent: 34,
     );
   }
 }
@@ -592,55 +564,79 @@ class _ProfileMenuSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OceanPanel(
+    return Container(
       padding: const EdgeInsets.fromLTRB(10, 16, 10, 10),
-      color: _accountSurface.withValues(alpha: 0.9),
-      borderColor: Colors.white.withValues(alpha: 0.72),
-      radius: 24,
-      showShadow: false,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x144C8ED4),
+            blurRadius: 22,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-            child: _PanelHeader(title: '설정과 기록', trailing: '예정'),
+            child: _PanelHeader(title: '기록과 설정'),
           ),
           _ProfileMenuTile(
             icon: Icons.history_rounded,
-            title: '내 토론 기록',
-            subtitle: '저장된 토론과 이전 결론을 확인합니다.',
-            onTap: () => onMenuTap('내 토론 기록'),
+            title: '질문기록',
+            subtitle: '남긴 질문 다시 보기',
+            onTap: () => onMenuTap('질문기록'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.tune_rounded,
-            title: '평가 기준 설정',
-            subtitle: '논리성, 근거, 현실성 가중치를 조정합니다.',
-            onTap: () => onMenuTap('평가 기준 설정'),
+            title: '평가 기준',
+            subtitle: '가중치 조정',
+            onTap: () => onMenuTap('평가 기준'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.notifications_none_rounded,
             title: '알림 설정',
-            subtitle: '토론 완료와 세션 업데이트 알림을 관리합니다.',
+            subtitle: '도착 방식 관리',
             onTap: () => onMenuTap('알림 설정'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.help_outline_rounded,
             title: '도움말',
-            subtitle: '토론 방식과 점수 계산 기준을 확인합니다.',
+            subtitle: '사용법 확인',
             onTap: () => onMenuTap('도움말'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
             icon: Icons.info_outline_rounded,
             title: '앱 정보',
-            subtitle: 'Magic Sora Debate 데모 버전입니다.',
+            subtitle: '현재 버전 확인',
             onTap: () => onMenuTap('앱 정보'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PanelHeader extends StatelessWidget {
+  const _PanelHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(
+        context,
+      ).textTheme.titleLarge?.copyWith(color: _accountText, fontSize: 18),
     );
   }
 }
@@ -664,8 +660,8 @@ class _ProfileMenuTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        highlightColor: _accountAccent.withValues(alpha: 0.08),
-        splashColor: _accountAccent.withValues(alpha: 0.1),
+        highlightColor: _accountTeal.withValues(alpha: 0.08),
+        splashColor: _accountTeal.withValues(alpha: 0.1),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -676,11 +672,22 @@ class _ProfileMenuTile extends StatelessWidget {
                 height: 43,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: _accountSurfaceWash.withValues(alpha: 0.96),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [_accountIconBgTop, _accountIconBgBottom],
+                  ),
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: _accountLine, width: 1),
+                  border: Border.all(color: _accountLineStrong),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x124C8ED4),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: _accountAccentStrong, size: 21),
+                child: Icon(icon, color: _accountTealStrong, size: 21),
               ),
               const SizedBox(width: 13),
               Expanded(
@@ -699,10 +706,11 @@ class _ProfileMenuTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: _accountTextMuted,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -729,7 +737,7 @@ class _MenuDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       height: 1,
-      color: _accountLine.withValues(alpha: 0.62),
+      color: _accountLine.withValues(alpha: 0.8),
       indent: 64,
       endIndent: 8,
     );
@@ -755,7 +763,7 @@ class _LogoutButton extends StatelessWidget {
           height: 54,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _accountDangerSoft.withValues(alpha: 0.86),
+            color: _accountDangerSoft.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: _accountDanger.withValues(alpha: 0.24)),
           ),
@@ -796,24 +804,284 @@ class _IconActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: _accountSurface.withValues(alpha: 0.88),
+        color: Colors.white.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          highlightColor: _accountAccent.withValues(alpha: 0.08),
-          splashColor: _accountAccent.withValues(alpha: 0.12),
+          highlightColor: _accountTeal.withValues(alpha: 0.08),
+          splashColor: _accountTeal.withValues(alpha: 0.12),
           onTap: onPressed,
           child: Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+              border: Border.all(color: _accountLineStrong),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_accountIconBgTop, _accountIconBgBottom],
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x144C8ED4),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
             ),
-            child: Icon(icon, color: _accountText),
+            child: Icon(icon, color: _accountTealStrong),
           ),
         ),
       ),
     );
   }
+}
+
+class _AccountDetailsSheet extends StatelessWidget {
+  const _AccountDetailsSheet({required this.user});
+
+  final AppUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(30),
+            bottom: Radius.circular(22),
+          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.98)),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withValues(alpha: 0.96),
+              _accountSurfaceSoft.withValues(alpha: 0.94),
+            ],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33275B8C),
+              blurRadius: 42,
+              offset: Offset(0, 18),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 54,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: _accountTealStrong.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.brightness_1_rounded,
+                              color: _accountGold,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'magic sora',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _accountTealStrong,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.8,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '계정 상세',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: _accountText,
+                                fontSize: 24,
+                                height: 1.06,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _accountTealStrong,
+                      backgroundColor: _accountSurfaceLavender,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: _accountLineStrong),
+                      ),
+                    ),
+                    child: const Text('닫기'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _DetailRow(
+                icon: Icons.radio_button_checked_rounded,
+                label: '로그인 방식',
+                subtitle: '현재 연결 수단',
+                value: user.isDemo ? '데모 세션' : '${user.loginProvider} 로그인',
+              ),
+              const _DetailDivider(),
+              _DetailRow(
+                icon: Icons.alternate_email_rounded,
+                label: '이메일',
+                subtitle: '동기화 계정',
+                value: _accountEmail(user),
+              ),
+              const _DetailDivider(),
+              _DetailRow(
+                icon: Icons.blur_circular_rounded,
+                label: '기록 상태',
+                subtitle: '질문기록 보관',
+                value: user.isDemo ? '임시 보관 중' : '연결 유지 중',
+              ),
+              const _DetailDivider(),
+              const _DetailRow(
+                icon: Icons.numbers_rounded,
+                label: '앱 버전',
+                subtitle: '현재 빌드',
+                value: 'v1.0',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_accountIconBgTop, _accountIconBgBottom],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: _accountLineStrong),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x124C8ED4),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: _accountTealStrong, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _accountText,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _accountTextMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: _accountText,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailDivider extends StatelessWidget {
+  const _DetailDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      color: _accountLine.withValues(alpha: 0.82),
+      indent: 52,
+    );
+  }
+}
+
+String _accountEmail(AppUser user) {
+  final email = user.email?.trim() ?? '';
+  if (email.isNotEmpty) {
+    return email;
+  }
+  return user.isDemo ? 'demo@magicsora.app' : '등록된 이메일 없음';
 }

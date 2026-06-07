@@ -199,6 +199,17 @@ class _LoginHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Text(
+                'Magic Sora',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppTheme.primaryDark,
+                  fontSize: isTight ? 23 : 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 10),
               Image.asset(
                 'assets/images/brand/magic_conch.png',
                 width: conchSize,
