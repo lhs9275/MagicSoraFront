@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/config/kakao_config.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -28,6 +29,8 @@ class KakaoAuthController {
         );
       }
 
+      await _logKakaoAccessTokenInfoForDebug();
+
       final user = await _fetchKakaoUserOrFallback();
       final session = _createLocalSession(token: token, user: user);
       await _authSessionStore.saveSession(session);
@@ -52,6 +55,24 @@ class KakaoAuthController {
       refreshToken: token.refreshToken,
       user: user,
     );
+  }
+
+  Future<void> _logKakaoAccessTokenInfoForDebug() async {
+    if (!kDebugMode) {
+      return;
+    }
+
+    try {
+      final tokenInfo = await UserApi.instance.accessTokenInfo();
+      debugPrint(
+        '[Kakao] access token info: '
+        'app_id=${tokenInfo.appId}, '
+        'user_id=${tokenInfo.id}, '
+        'expires_in=${tokenInfo.expiresIn}',
+      );
+    } catch (error) {
+      debugPrint('[Kakao] failed to fetch access token info: $error');
+    }
   }
 
   Future<AppUser> _fetchKakaoUserOrFallback() async {

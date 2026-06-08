@@ -72,7 +72,7 @@ com.example.magicsorafront
 Debug and release builds use the shared Native app key scheme by default:
 
 ```xcconfig
-KAKAO_NATIVE_APP_KEY_SCHEME=kakaof8cb26e197dd82be1594a682a0016f59
+KAKAO_NATIVE_APP_KEY_SCHEME=kakaoREDACTED_KAKAO_NATIVE_KEY
 ```
 
 To override it locally, copy the example file:
