@@ -185,7 +185,8 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                     OceanPillButton(
                       label: '새 질문하기',
                       icon: Icons.keyboard_return_rounded,
-                      backgroundColor: AppTheme.shellPurple,
+                      backgroundColor: AppTheme.deepNavy,
+                      foregroundColor: Colors.white,
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ],
@@ -287,7 +288,7 @@ class _FollowUpQuestionBox extends StatelessWidget {
           OceanPillButton(
             label: '추가 질문 보내기',
             icon: Icons.send_rounded,
-            backgroundColor: AppTheme.shellPink,
+            backgroundColor: AppTheme.primaryLight,
             onPressed: onSubmit,
           ),
         ],

@@ -142,7 +142,8 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                 child: OceanPillButton(
                   label: '채팅으로 돌아가기',
                   icon: Icons.chat_bubble_rounded,
-                  backgroundColor: AppTheme.shellPurple,
+                  backgroundColor: AppTheme.deepNavy,
+                  foregroundColor: Colors.white,
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
