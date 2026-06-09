@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/debate/models/debate_models.dart';
+import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
 import 'package:magicsorafront/features/home/models/question_history_entry.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/question_history_action_sheet.dart';
 
 class QuestionHistoryScreen extends StatefulWidget {
-  const QuestionHistoryScreen({required this.questions, super.key});
+  const QuestionHistoryScreen({
+    required this.questions,
+    super.key,
+    this.loadFromApi = false,
+    this.debateApiService,
+  });
 
   final List<QuestionHistoryEntry> questions;
+  final bool loadFromApi;
+  final DebateApiService? debateApiService;
 
   @override
   State<QuestionHistoryScreen> createState() => _QuestionHistoryScreenState();
@@ -16,18 +25,23 @@ class QuestionHistoryScreen extends StatefulWidget {
 
 class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
   final _searchController = TextEditingController();
+  late final DebateApiService _debateApiService;
+
   String _keyword = '';
+  List<QuestionHistoryEntry>? _remoteQuestions;
+  bool _isLoading = false;
+  String? _loadErrorMessage;
+
+  List<QuestionHistoryEntry> get _questions =>
+      _remoteQuestions ?? widget.questions;
 
   List<_QuestionArchiveEntry> get _filteredQuestions {
     final rawKeyword = _keyword.trim().toLowerCase();
     final keyword = _compactSearchText(rawKeyword);
     final keywordInitials = _toHangulInitials(keyword);
     final entries = [
-      for (var index = 0; index < widget.questions.length; index++)
-        _QuestionArchiveEntry(
-          number: index + 1,
-          entry: widget.questions[index],
-        ),
+      for (var index = 0; index < _questions.length; index++)
+        _QuestionArchiveEntry(number: index + 1, entry: _questions[index]),
     ];
 
     if (keyword.isEmpty) {
@@ -101,6 +115,15 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _debateApiService = widget.debateApiService ?? DebateApiService();
+    if (widget.loadFromApi) {
+      _loadDebates();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -118,14 +141,103 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
   }
 
   void _openQuestionActions(QuestionHistoryEntry entry) {
-    showQuestionHistoryActionSheet(context, entry);
+    showQuestionHistoryActionSheet(
+      context,
+      entry,
+      onDelete: entry.debateId == null ? null : _deleteDebate,
+    );
+  }
+
+  Future<void> _loadDebates() async {
+    setState(() {
+      _isLoading = true;
+      _loadErrorMessage = null;
+    });
+
+    try {
+      final page = await _debateApiService.fetchDebates();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _remoteQuestions = page.items.map(_entryFromDebateSummary).toList();
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = error is DebateApiException
+          ? error.message
+          : '질문 기록을 불러오지 못했습니다.';
+      setState(() {
+        _isLoading = false;
+        _loadErrorMessage = message;
+      });
+    }
+  }
+
+  QuestionHistoryEntry _entryFromDebateSummary(DebateSummary summary) {
+    return QuestionHistoryEntry(
+      question: summary.topic,
+      answer: summary.finalVerdict ?? _fallbackAnswerFor(summary),
+      debateId: summary.id,
+      status: summary.status,
+      createdAt: summary.createdAt,
+    );
+  }
+
+  String _fallbackAnswerFor(DebateSummary summary) {
+    return switch (summary.status) {
+      DebateStatus.running => '토론이 진행 중입니다.',
+      DebateStatus.cancelled => '취소된 토론입니다.',
+      DebateStatus.failed =>
+        summary.errorCode == null
+            ? '토론이 실패했습니다.'
+            : '토론이 실패했습니다. ${summary.errorCode}',
+      DebateStatus.degraded => '일부 단계가 실패했지만 결과가 저장되었습니다.',
+      DebateStatus.done => '저장된 최종 답변이 없습니다.',
+    };
+  }
+
+  Future<void> _deleteDebate(QuestionHistoryEntry entry) async {
+    final debateId = entry.debateId;
+    if (debateId == null) {
+      return;
+    }
+
+    try {
+      await _debateApiService.deleteDebate(debateId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _remoteQuestions = [
+          for (final question in _questions)
+            if (question.debateId != debateId) question,
+        ];
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('질문 기록을 삭제했습니다.')));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = error is DebateApiException
+          ? error.message
+          : '질문 기록을 삭제하지 못했습니다.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final filteredQuestions = _filteredQuestions;
     final hasKeyword = _keyword.trim().isNotEmpty;
-    final totalCount = widget.questions.length;
+    final totalCount = _questions.length;
 
     return Scaffold(
       body: OceanShellBackground(
@@ -166,6 +278,14 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                         filteredCount: filteredQuestions.length,
                         hasKeyword: hasKeyword,
                       ),
+                      if (_isLoading || _loadErrorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        _ArchiveLoadStatus(
+                          isLoading: _isLoading,
+                          message: _loadErrorMessage,
+                          onRetry: _loadDebates,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       OceanPanel(
                         padding: const EdgeInsets.all(16),
@@ -329,6 +449,56 @@ class _ArchiveQuestionList extends StatelessWidget {
           if (index != entries.length - 1) const SizedBox(height: 10),
         ],
       ],
+    );
+  }
+}
+
+class _ArchiveLoadStatus extends StatelessWidget {
+  const _ArchiveLoadStatus({
+    required this.isLoading,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final bool isLoading;
+  final String? message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return OceanPanel(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      color: Colors.white.withValues(alpha: 0.74),
+      child: Row(
+        children: [
+          if (isLoading)
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            )
+          else
+            Icon(
+              Icons.info_rounded,
+              color: AppTheme.primaryDark.withValues(alpha: 0.78),
+              size: 20,
+            ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isLoading ? '질문 기록을 불러오는 중입니다.' : message ?? '',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          if (!isLoading) ...[
+            const SizedBox(width: 8),
+            TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+          ],
+        ],
+      ),
     );
   }
 }

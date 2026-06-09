@@ -2,15 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/config/kakao_config.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
-import 'package:magicsorafront/features/auth/models/auth_session.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
+import 'package:magicsorafront/features/auth/services/bff_auth_service.dart';
 
 class KakaoAuthController {
-  KakaoAuthController({AuthSessionStore? authSessionStore})
-    : _authSessionStore = authSessionStore ?? AuthSessionStore.instance;
+  KakaoAuthController({
+    AuthSessionStore? authSessionStore,
+    BffAuthService? bffAuthService,
+  }) : _authSessionStore = authSessionStore ?? AuthSessionStore.instance,
+       _bffAuthService = bffAuthService ?? BffAuthService();
 
   final AuthSessionStore _authSessionStore;
+  final BffAuthService _bffAuthService;
 
   Future<LoginResult> submitKakaoLogin() async {
     if (!KakaoConfig.hasNativeAppKey) {
@@ -32,7 +36,10 @@ class KakaoAuthController {
       await _logKakaoAccessTokenInfoForDebug();
 
       final user = await _fetchKakaoUserOrFallback();
-      final session = _createLocalSession(token: token, user: user);
+      final session = await _bffAuthService.exchangeKakaoAccessToken(
+        kakaoAccessToken: token.accessToken,
+        fallbackUser: user,
+      );
       await _authSessionStore.saveSession(session);
 
       return LoginResult(
@@ -44,17 +51,6 @@ class KakaoAuthController {
     } catch (error) {
       return LoginResult(isSuccess: false, message: _messageFor(error));
     }
-  }
-
-  AuthSession _createLocalSession({
-    required OAuthToken token,
-    required AppUser user,
-  }) {
-    return AuthSession(
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-      user: user,
-    );
   }
 
   Future<void> _logKakaoAccessTokenInfoForDebug() async {
@@ -119,6 +115,10 @@ class KakaoAuthController {
   String _messageFor(Object error) {
     if (_isUserCancelled(error)) {
       return '카카오 로그인을 취소했습니다.';
+    }
+
+    if (error is BffAuthException) {
+      return error.message;
     }
 
     if (error is KakaoException) {

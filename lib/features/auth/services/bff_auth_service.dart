@@ -53,7 +53,7 @@ class BffAuthService {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
-            body: jsonEncode({'accessToken': kakaoAccessToken}),
+            body: jsonEncode({'kakaoAccessToken': kakaoAccessToken}),
           )
           .timeout(const Duration(seconds: 15));
     } on SocketException {

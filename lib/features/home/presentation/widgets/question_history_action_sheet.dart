@@ -6,8 +6,9 @@ import 'package:magicsorafront/features/home/presentation/screens/magic_conch_re
 
 Future<void> showQuestionHistoryActionSheet(
   BuildContext context,
-  QuestionHistoryEntry entry,
-) {
+  QuestionHistoryEntry entry, {
+  Future<void> Function(QuestionHistoryEntry entry)? onDelete,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -28,12 +29,18 @@ Future<void> showQuestionHistoryActionSheet(
         );
       }
 
+      Future<void> deleteEntry() async {
+        await Navigator.of(sheetContext).maybePop();
+        await onDelete?.call(entry);
+      }
+
       return _QuestionHistoryActionSheet(
         entry: entry,
         onViewPreviousAnswer: () =>
             openHistoryRoute(showFollowUpInputInitially: false),
         onContinueQuestion: () =>
             openHistoryRoute(showFollowUpInputInitially: true),
+        onDelete: onDelete == null ? null : deleteEntry,
       );
     },
   );
@@ -44,11 +51,13 @@ class _QuestionHistoryActionSheet extends StatelessWidget {
     required this.entry,
     required this.onViewPreviousAnswer,
     required this.onContinueQuestion,
+    this.onDelete,
   });
 
   final QuestionHistoryEntry entry;
   final VoidCallback onViewPreviousAnswer;
   final VoidCallback onContinueQuestion;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +149,15 @@ class _QuestionHistoryActionSheet extends StatelessWidget {
                 backgroundColor: AppTheme.shellPink,
                 onPressed: onContinueQuestion,
               ),
+              if (onDelete != null) ...[
+                const SizedBox(height: 10),
+                OceanPillButton(
+                  label: '기록 삭제',
+                  icon: Icons.delete_rounded,
+                  backgroundColor: AppTheme.coral,
+                  onPressed: onDelete!,
+                ),
+              ],
             ],
           ),
         ),

@@ -8,16 +8,16 @@
 
 ## Android setup
 
-The shared Native app key is committed in `android/gradle.properties`:
+Set the Native app key locally in `android/local.properties`:
 
 ```properties
 kakao.native_app_key=YOUR_NATIVE_APP_KEY
 ```
 
-Android builds read this value from `android/gradle.properties`, with optional
-overrides from `android/local.properties` or the `KAKAO_NATIVE_APP_KEY`
-environment variable. It injects both the manifest redirect scheme and the
-Flutter SDK runtime key:
+Android builds read this value from `android/local.properties`, with optional
+fallbacks from the `kakao.native_app_key` Gradle property or the
+`KAKAO_NATIVE_APP_KEY` environment variable. It injects both the manifest
+redirect scheme and the Flutter SDK runtime key:
 
 ```text
 kakaoYOUR_NATIVE_APP_KEY://oauth
@@ -69,10 +69,10 @@ Current iOS Bundle ID for Kakao Developers:
 com.example.magicsorafront
 ```
 
-Debug and release builds use the shared Native app key scheme by default:
+Debug and release builds use a placeholder scheme by default:
 
 ```xcconfig
-KAKAO_NATIVE_APP_KEY_SCHEME=kakaoREDACTED_KAKAO_NATIVE_KEY
+KAKAO_NATIVE_APP_KEY_SCHEME=kakaoYOUR_NATIVE_APP_KEY
 ```
 
 To override it locally, copy the example file:
@@ -104,25 +104,25 @@ and expects the service token in return.
 Run the app with the BFF URL:
 
 ```sh
-flutter run --dart-define=BFF_BASE_URL=https://your-bff.example.com
+flutter run --dart-define=BFF_BASE_URL=https://bff.noctide.dev
 ```
 
 Optional login endpoint override:
 
 ```sh
 flutter run \
-  --dart-define=BFF_BASE_URL=https://your-bff.example.com \
-  --dart-define=BFF_KAKAO_LOGIN_PATH=/auth/kakao/login
+  --dart-define=BFF_BASE_URL=https://bff.noctide.dev \
+  --dart-define=BFF_KAKAO_LOGIN_PATH=/mapi/auth/kakao
 ```
 
 Default request from the Flutter app:
 
 ```http
-POST /auth/kakao/login
+POST /mapi/auth/kakao
 Content-Type: application/json
 
 {
-  "accessToken": "kakao-access-token"
+  "kakaoAccessToken": "kakao-access-token"
 }
 ```
 
@@ -130,14 +130,11 @@ Expected BFF response shape:
 
 ```json
 {
-  "accessToken": "bff-access-token",
-  "refreshToken": "optional-refresh-token",
-  "user": {
-    "nickname": "Magic Sora",
-    "email": "user@example.com",
-    "profileImageUrl": "https://...",
-    "loginProvider": "카카오"
-  }
+  "token_type": "Bearer",
+  "access_token": "bff-access-token",
+  "access_token_expires_in": 900,
+  "refresh_token": "optional-refresh-token",
+  "refresh_token_expires_in": 1209600
 }
 ```
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/account/presentation/screens/account_profile_screen.dart';
+import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
 import 'package:magicsorafront/features/home/models/question_history_entry.dart';
 import 'package:magicsorafront/features/home/presentation/layouts/desktop_home_layout.dart';
 import 'package:magicsorafront/features/home/presentation/layouts/mobile_home_layout.dart';
@@ -48,6 +49,8 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   ];
 
   final _questionController = TextEditingController();
+  final _debateApiService = DebateApiService();
+  bool _isSubmittingQuestion = false;
   AppUser get _currentUser => widget.user ?? AppUser.fallback;
 
   // TODO: 실제 질문 기록 데이터가 생기면 서버/로컬 저장소에서 불러오도록 교체한다.
@@ -108,16 +111,57 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
     super.dispose();
   }
 
-  void _openResult() {
-    _openResultForQuestion(_questionController.text);
+  Future<void> _openResult() async {
+    final trimmedQuestion = _questionController.text.trim();
+    if (trimmedQuestion.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('질문을 입력해주세요.')));
+      return;
+    }
+
+    if (_isSubmittingQuestion) {
+      return;
+    }
+
+    setState(() {
+      _isSubmittingQuestion = true;
+    });
+
+    try {
+      final debateId = await _debateApiService.startDebate(trimmedQuestion);
+      if (!mounted) {
+        return;
+      }
+      _openResultForQuestion(trimmedQuestion, debateId: debateId);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = error is DebateApiException
+          ? error.message
+          : '토론을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingQuestion = false;
+        });
+      }
+    }
   }
 
-  void _openResultForQuestion(String question) {
+  void _openResultForQuestion(String question, {int? debateId}) {
     final trimmedQuestion = question.trim();
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => MagicConchResultScreen(question: trimmedQuestion),
+        builder: (_) => MagicConchResultScreen(
+          question: trimmedQuestion,
+          debateId: debateId,
+        ),
       ),
     );
   }
@@ -133,7 +177,10 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   void _openQuestionHistory() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => QuestionHistoryScreen(questions: _questionHistory),
+        builder: (_) => QuestionHistoryScreen(
+          questions: _questionHistory,
+          loadFromApi: true,
+        ),
       ),
     );
   }
