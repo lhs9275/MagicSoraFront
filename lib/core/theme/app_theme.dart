@@ -18,6 +18,7 @@ class AppTheme {
   static const shellPurple = Color(0xFFC0A0FF);
   static const cream = Color(0xFFFFFAE8);
   static const skyBlue = Color(0xFF6BD1F0);
+  static const deepNavy = Color(0xFF1F4A68);
   static const surfaceBase = Color(0xFFF1FAF5);
   static const surfaceCard = Color(0xFFFFFEF8);
   static const surfaceRaised = Color(0xFFFFFFFF);
