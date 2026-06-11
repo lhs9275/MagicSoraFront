@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -8,12 +9,20 @@ import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/debate/models/debate_models.dart';
 
 class DebateApiService {
-  DebateApiService({http.Client? httpClient, AuthSessionStore? sessionStore})
-    : _httpClient = httpClient ?? http.Client(),
-      _sessionStore = sessionStore ?? AuthSessionStore.instance;
+  DebateApiService({
+    http.Client? httpClient,
+    AuthSessionStore? sessionStore,
+    List<Duration>? streamRetryDelays,
+  }) : _httpClient = httpClient ?? http.Client(),
+       _sessionStore = sessionStore ?? AuthSessionStore.instance,
+       _streamRetryDelays = List.unmodifiable(
+         streamRetryDelays ??
+             const [Duration(milliseconds: 300), Duration(seconds: 1)],
+       );
 
   final http.Client _httpClient;
   final AuthSessionStore _sessionStore;
+  final List<Duration> _streamRetryDelays;
 
   Future<int> startDebate(String topic) async {
     final response = await _httpClient
@@ -36,35 +45,7 @@ class DebateApiService {
 
   Stream<DebateSseEvent> streamDebate(int debateId) async* {
     final path = '/api/debates/$debateId/stream';
-    final request = http.Request('GET', BffConfig.apiUri(path));
-    request.headers.addAll(await _streamHeaders());
-
-    final http.StreamedResponse response;
-    try {
-      response = await _httpClient
-          .send(request)
-          .timeout(const Duration(minutes: 10));
-    } on TimeoutException {
-      throw DebateApiException('토론 스트림 연결 시간이 초과되었습니다. timeout=10m path=$path');
-    } on http.ClientException catch (error) {
-      final detail = error.message.trim();
-      throw DebateApiException(
-        detail.isEmpty ? '토론 스트림 연결에 실패했습니다. path=$path' : detail,
-      );
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final bodyText = await response.stream.bytesToString();
-      throw DebateApiException(
-        _messageFromBodyText(
-          bodyText,
-          fallback:
-              '토론 스트림 연결에 실패했습니다. status=${response.statusCode} path=$path',
-        ),
-        statusCode: response.statusCode,
-      );
-    }
-
+    final response = await _openDebateStream(path);
     yield* _parseSse(response.stream);
   }
 
@@ -186,6 +167,94 @@ class DebateApiService {
     };
   }
 
+  Future<http.StreamedResponse> _openDebateStream(String path) async {
+    final headers = await _streamHeaders();
+    final totalAttempts = _streamRetryDelays.length + 1;
+    DebateApiException? lastError;
+
+    for (var attempt = 0; attempt < totalAttempts; attempt++) {
+      if (attempt > 0) {
+        await Future.delayed(_streamRetryDelays[attempt - 1]);
+      }
+
+      final request = http.Request('GET', BffConfig.apiUri(path));
+      request.headers.addAll(headers);
+
+      try {
+        final response = await _httpClient
+            .send(request)
+            .timeout(const Duration(minutes: 10));
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return response;
+        }
+
+        final bodyText = await response.stream.bytesToString();
+        final shouldRetry =
+            attempt < totalAttempts - 1 &&
+            _shouldRetryStreamStatusCode(response.statusCode);
+
+        _logStreamConnectFailure(
+          path: path,
+          attempt: attempt + 1,
+          totalAttempts: totalAttempts,
+          statusCode: response.statusCode,
+          bodyText: bodyText,
+          nextDelay: shouldRetry ? _streamRetryDelays[attempt] : null,
+        );
+
+        lastError = DebateApiException(
+          _messageFromBodyText(
+            bodyText,
+            fallback: _streamConnectFailureMessage(response.statusCode, path),
+          ),
+          statusCode: response.statusCode,
+        );
+
+        if (!shouldRetry) {
+          throw lastError;
+        }
+      } on TimeoutException {
+        final shouldRetry = attempt < totalAttempts - 1;
+        lastError = DebateApiException(
+          '토론 스트림 연결 시간이 초과되었습니다. timeout=10m path=$path',
+        );
+
+        _logStreamConnectFailure(
+          path: path,
+          attempt: attempt + 1,
+          totalAttempts: totalAttempts,
+          errorMessage: lastError.message,
+          nextDelay: shouldRetry ? _streamRetryDelays[attempt] : null,
+        );
+
+        if (!shouldRetry) {
+          throw lastError;
+        }
+      } on http.ClientException catch (error) {
+        final shouldRetry = attempt < totalAttempts - 1;
+        final detail = error.message.trim();
+        lastError = DebateApiException(
+          detail.isEmpty ? '토론 스트림 연결에 실패했습니다. path=$path' : detail,
+        );
+
+        _logStreamConnectFailure(
+          path: path,
+          attempt: attempt + 1,
+          totalAttempts: totalAttempts,
+          errorMessage: detail.isEmpty ? error.runtimeType.toString() : detail,
+          nextDelay: shouldRetry ? _streamRetryDelays[attempt] : null,
+        );
+
+        if (!shouldRetry) {
+          throw lastError;
+        }
+      }
+    }
+
+    throw lastError ?? DebateApiException('토론 스트림 연결에 실패했습니다. path=$path');
+  }
+
   Future<String> _accessToken() async {
     final session =
         _sessionStore.currentSession ?? await _sessionStore.loadSession();
@@ -258,6 +327,59 @@ class DebateApiService {
     }
 
     return fallback;
+  }
+
+  bool _shouldRetryStreamStatusCode(int statusCode) {
+    return statusCode == 408 || statusCode == 429 || statusCode >= 500;
+  }
+
+  String _streamConnectFailureMessage(int statusCode, String path) {
+    final baseMessage = statusCode >= 500
+        ? '토론 서버 응답이 불안정합니다. 잠시 후 다시 시도해주세요.'
+        : '토론 스트림 연결에 실패했습니다.';
+    return '$baseMessage status=$statusCode path=$path';
+  }
+
+  void _logStreamConnectFailure({
+    required String path,
+    required int attempt,
+    required int totalAttempts,
+    int? statusCode,
+    String? bodyText,
+    String? errorMessage,
+    Duration? nextDelay,
+  }) {
+    final summary = StringBuffer(
+      '[DebateStream] connect failed path=$path attempt=$attempt/$totalAttempts',
+    );
+
+    if (statusCode != null) {
+      summary.write(' status=$statusCode');
+    }
+    if (errorMessage != null && errorMessage.isNotEmpty) {
+      summary.write(' error=$errorMessage');
+    }
+    if (nextDelay != null) {
+      summary.write(' retryInMs=${nextDelay.inMilliseconds}');
+    }
+
+    final bodyPreview = _bodyPreviewForLog(bodyText);
+    if (bodyPreview != null) {
+      summary.write(' body=$bodyPreview');
+    }
+
+    developer.log(summary.toString(), name: 'DebateApiService');
+  }
+
+  String? _bodyPreviewForLog(String? bodyText) {
+    final normalized = bodyText?.replaceAll(RegExp(r'\s+'), ' ').trim() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    if (normalized.length <= 240) {
+      return normalized;
+    }
+    return '${normalized.substring(0, 240)}...';
   }
 
   String? _firstNonEmptyString(Iterable<Object?> values) {

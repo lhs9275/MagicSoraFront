@@ -20,6 +20,18 @@ class AuthSession {
   final String? refreshToken;
   final AppUser user;
 
+  AuthSession copyWith({
+    String? accessToken,
+    String? refreshToken,
+    AppUser? user,
+  }) {
+    return AuthSession(
+      accessToken: accessToken ?? this.accessToken,
+      refreshToken: refreshToken ?? this.refreshToken,
+      user: user ?? this.user,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'accessToken': accessToken,

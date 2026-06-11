@@ -35,7 +35,7 @@ class QuestionHistoryPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '질문 아카이브',
+                      '질문 기록',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: _historyRowText,
                         fontSize: 17,
@@ -95,6 +95,8 @@ class HistoryTile extends StatelessWidget {
     super.key,
     this.index,
     this.compact = false,
+    this.showLeading = true,
+    this.leading,
     this.caption,
     this.backgroundColor,
     this.borderColor,
@@ -105,6 +107,8 @@ class HistoryTile extends StatelessWidget {
   final String question;
   final int? index;
   final bool compact;
+  final bool showLeading;
+  final Widget? leading;
   final String? caption;
   final Color? backgroundColor;
   final Color? borderColor;
@@ -158,33 +162,38 @@ class HistoryTile extends StatelessWidget {
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: [
-          Container(
-            width: badgeSize,
-            height: badgeSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.84),
-              borderRadius: BorderRadius.circular(compact ? 14 : 16),
-              border: Border.all(
-                color: AppTheme.skyBlue.withValues(alpha: 0.22),
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 8),
+          ] else if (showLeading) ...[
+            Container(
+              width: badgeSize,
+              height: badgeSize,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.84),
+                borderRadius: BorderRadius.circular(compact ? 14 : 16),
+                border: Border.all(
+                  color: AppTheme.skyBlue.withValues(alpha: 0.22),
+                ),
               ),
-            ),
-            child: index == null
-                ? Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: AppTheme.primaryDark,
-                    size: compact ? 17 : 18,
-                  )
-                : Text(
-                    index!.toString().padLeft(2, '0'),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              child: index == null
+                  ? Icon(
+                      Icons.chat_bubble_outline_rounded,
                       color: AppTheme.primaryDark,
-                      fontSize: compact ? 12 : 13,
-                      fontWeight: FontWeight.w900,
+                      size: compact ? 17 : 18,
+                    )
+                  : Text(
+                      index!.toString().padLeft(2, '0'),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppTheme.primaryDark,
+                        fontSize: compact ? 12 : 13,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ),
-          ),
-          const SizedBox(width: 12),
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Align(
               alignment: caption == null
@@ -622,9 +631,9 @@ class _InteractiveConchState extends State<InteractiveConch> {
                       width: width * 0.2 + _maxPullDistance,
                       height: height * 0.18,
                       child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Transform.translate(
-                        offset: Offset(_pullDistance, pullLift),
+                        alignment: Alignment.centerLeft,
+                        child: Transform.translate(
+                          offset: Offset(_pullDistance, pullLift),
                           child: MouseRegion(
                             cursor: SystemMouseCursors.grab,
                             child: GestureDetector(

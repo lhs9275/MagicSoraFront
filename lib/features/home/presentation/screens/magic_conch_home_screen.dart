@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/account/presentation/screens/account_profile_screen.dart';
 import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
@@ -51,7 +52,8 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   final _questionController = TextEditingController();
   final _debateApiService = DebateApiService();
   bool _isSubmittingQuestion = false;
-  AppUser get _currentUser => widget.user ?? AppUser.fallback;
+  late AppUser _activeUser;
+  AppUser get _currentUser => _activeUser;
 
   // TODO: 실제 질문 기록 데이터가 생기면 서버/로컬 저장소에서 불러오도록 교체한다.
   final List<QuestionHistoryEntry> _questionHistory = _buildQuestionHistory();
@@ -103,6 +105,26 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
     }
 
     return '이 질문은 다시 이어가기 좋은 기본 질문입니다. 핵심 입장을 먼저 세우고, 이유 두 가지와 짧은 예시 하나를 붙이면 바로 다음 답변으로 연결하기 좋습니다.';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _activeUser = widget.user ?? AppUser.fallback;
+    _hydrateUser();
+  }
+
+  Future<void> _hydrateUser() async {
+    final hydratedUser = await AuthSessionStore.instance.hydrateUser(
+      _activeUser,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _activeUser = hydratedUser;
+    });
   }
 
   @override
@@ -171,7 +193,14 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
       MaterialPageRoute<void>(
         builder: (_) => AccountProfileScreen(
           user: _currentUser,
-          onOpenQuestionHistory: _openQuestionHistory,
+          onUserChanged: (user) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _activeUser = user;
+            });
+          },
         ),
       ),
     );
@@ -183,6 +212,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
         builder: (_) => QuestionHistoryScreen(
           questions: _questionHistory,
           loadFromApi: true,
+          ownerNickname: _currentUser.nickname,
         ),
       ),
     );

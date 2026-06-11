@@ -7,16 +7,6 @@ import 'package:magicsorafront/features/debate/models/debate_models.dart';
 import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
 import 'package:magicsorafront/features/home/presentation/screens/evaluation_result_screen.dart';
 
-enum QuestionRequestMode {
-  newQuestion('new_question'),
-  followUp('follow_up'),
-  reEvaluate('re_evaluate');
-
-  const QuestionRequestMode(this.apiValue);
-
-  final String apiValue;
-}
-
 class MagicConchResultScreen extends StatefulWidget {
   const MagicConchResultScreen({
     required this.question,
@@ -42,7 +32,6 @@ class MagicConchResultScreen extends StatefulWidget {
 class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   final _followUpController = TextEditingController();
   final List<DebateSseEvent> _streamEvents = [];
-  final List<_FollowUpTurn> _followUpTurns = [];
 
   late final DebateApiService _debateApiService;
   late bool _isAnswerReady;
@@ -52,6 +41,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   String? _streamAnswer;
   String? _streamErrorMessage;
   bool _isStreaming = false;
+  bool _isSubmittingFollowUp = false;
   bool _didReachTerminalEvent = false;
 
   String get _trimmedQuestion => widget.question.trim();
@@ -81,16 +71,6 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       return '토론 결과를 기다리고 있어요.';
     }
     return '마법의 소라고동은 이렇게 대답했어요.';
-  }
-
-  Map<String, String> _buildFollowUpContext(String followUpQuestion) {
-    // TODO: API 요청 body로 전달하면 백엔드가 mode 값으로 처리 흐름을 구분할 수 있다.
-    return {
-      'mode': QuestionRequestMode.followUp.apiValue,
-      'originalQuestion': _trimmedQuestion,
-      'currentAnswer': _resolvedAnswer,
-      'followUpQuestion': followUpQuestion,
-    };
   }
 
   @override
@@ -192,18 +172,24 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   void _openEvaluationResultFor(String question, String answer) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => EvaluationResultScreen(
-          question: question,
-          answer: answer,
-        ),
+        builder: (_) =>
+            EvaluationResultScreen(question: question, answer: answer),
       ),
     );
   }
 
   void _showAdditionalQuestionInput() {
+    if (_isSubmittingFollowUp) {
+      return;
+    }
+
     setState(() {
       _showFollowUpInput = true;
     });
+  }
+
+  void _handleFollowUpSubmit() {
+    unawaited(_submitFollowUpQuestion());
   }
 
   Future<void> _cancelDebate() async {
@@ -235,8 +221,12 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
     }
   }
 
-  void _submitFollowUpQuestion() {
+  Future<void> _submitFollowUpQuestion() async {
     final followUpQuestion = _followUpController.text.trim();
+
+    if (_isSubmittingFollowUp) {
+      return;
+    }
 
     if (followUpQuestion.isEmpty) {
       ScaffoldMessenger.of(
@@ -245,23 +235,45 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       return;
     }
 
-    _buildFollowUpContext(followUpQuestion);
-
     setState(() {
-      _followUpTurns.add(
-        _FollowUpTurn(
-          question: followUpQuestion,
-          answer: _buildFollowUpAnswer(followUpQuestion),
+      _isSubmittingFollowUp = true;
+    });
+
+    try {
+      final debateId = await _debateApiService.startDebate(followUpQuestion);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _followUpController.clear();
+        _showFollowUpInput = false;
+        _isSubmittingFollowUp = false;
+      });
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => MagicConchResultScreen(
+            question: followUpQuestion,
+            debateId: debateId,
+            debateApiService: _debateApiService,
+          ),
         ),
       );
-      _followUpController.clear();
-      _showFollowUpInput = false;
-    });
-  }
-
-  String _buildFollowUpAnswer(String followUpQuestion) {
-    // TODO: API 연결 후 follow_up mode 응답으로 교체한다.
-    return '마법의 소라고동은 추가 질문에도 이렇게 대답했어요. 지금은 API 연결 전이라 임시 답변을 보여주고 있어요.';
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = error is DebateApiException
+          ? error.message
+          : '추가 질문을 시작하지 못했습니다.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      setState(() {
+        _isSubmittingFollowUp = false;
+      });
+    }
   }
 
   @override
@@ -354,19 +366,6 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                               : null,
                         ),
                       ],
-                      if (_followUpTurns.isNotEmpty) ...[
-                        const SizedBox(height: 18),
-                        for (final turn in _followUpTurns) ...[
-                          _FollowUpTurnCard(
-                            turn: turn,
-                            onOpenEvaluation: () => _openEvaluationResultFor(
-                              turn.question,
-                              turn.answer,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                        ],
-                      ],
                       if (_isLiveDebate && !_isAnswerReady) ...[
                         const SizedBox(height: 18),
                         OceanPillButton(
@@ -382,7 +381,8 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                       if (_showFollowUpInput)
                         _FollowUpQuestionBox(
                           controller: _followUpController,
-                          onSubmit: _submitFollowUpQuestion,
+                          isSubmitting: _isSubmittingFollowUp,
+                          onSubmit: _handleFollowUpSubmit,
                         )
                       else
                         OceanPillButton(
@@ -408,61 +408,6 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FollowUpTurn {
-  const _FollowUpTurn({required this.question, required this.answer});
-
-  final String question;
-  final String answer;
-}
-
-class _FollowUpTurnCard extends StatelessWidget {
-  const _FollowUpTurnCard({
-    required this.turn,
-    required this.onOpenEvaluation,
-  });
-
-  final _FollowUpTurn turn;
-  final VoidCallback onOpenEvaluation;
-
-  @override
-  Widget build(BuildContext context) {
-    return OceanPanel(
-      padding: const EdgeInsets.all(16),
-      color: Colors.white.withValues(alpha: 0.72),
-      borderColor: AppTheme.skyBlue.withValues(alpha: 0.26),
-      radius: 28,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '추가 질문',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.primaryDark,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            turn.question,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _TemporaryAnswerCard(
-            answer: turn.answer,
-            onTap: onOpenEvaluation,
-          ),
-        ],
       ),
     );
   }
@@ -605,10 +550,12 @@ class _DebateProgressRow extends StatelessWidget {
 class _FollowUpQuestionBox extends StatelessWidget {
   const _FollowUpQuestionBox({
     required this.controller,
+    required this.isSubmitting,
     required this.onSubmit,
   });
 
   final TextEditingController controller;
+  final bool isSubmitting;
   final VoidCallback onSubmit;
 
   @override
@@ -636,6 +583,7 @@ class _FollowUpQuestionBox extends StatelessWidget {
                       ),
                       child: TextField(
                         controller: controller,
+                        enabled: !isSubmitting,
                         minLines: 1,
                         maxLines: 3,
                         keyboardType: TextInputType.multiline,
@@ -694,16 +642,25 @@ class _FollowUpQuestionBox extends StatelessWidget {
                         elevation: 0,
                         child: InkWell(
                           customBorder: const CircleBorder(),
-                          onTap: onSubmit,
+                          onTap: isSubmitting ? null : onSubmit,
                           child: Center(
-                            child: Transform.translate(
-                              offset: const Offset(1.5, 0),
-                              child: const Icon(
-                                Icons.send_rounded,
-                                color: AppTheme.textPrimary,
-                                size: 21,
-                              ),
-                            ),
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                  )
+                                : Transform.translate(
+                                    offset: const Offset(1.5, 0),
+                                    child: const Icon(
+                                      Icons.send_rounded,
+                                      color: AppTheme.textPrimary,
+                                      size: 21,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

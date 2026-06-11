@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/auth_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +9,7 @@ class AuthSessionStore {
   AuthSessionStore._();
 
   static const _sessionKey = 'auth.session';
+  static const _nicknameKey = 'profile.nickname';
   static final instance = AuthSessionStore._();
 
   AuthSession? _cachedSession;
@@ -44,9 +46,44 @@ class AuthSessionStore {
     return session;
   }
 
+  Future<AppUser> hydrateUser(AppUser fallbackUser) async {
+    final session = await loadSession();
+    if (session != null) {
+      return session.user;
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    final nickname = preferences.getString(_nicknameKey)?.trim() ?? '';
+    if (nickname.isEmpty) {
+      return fallbackUser;
+    }
+
+    return fallbackUser.copyWith(nickname: nickname);
+  }
+
+  Future<AppUser> saveNickname({
+    required String nickname,
+    required AppUser fallbackUser,
+  }) async {
+    final cleanedNickname = nickname.trim();
+    final preferences = await SharedPreferences.getInstance();
+    final session = await loadSession();
+
+    if (session != null) {
+      final updatedUser = session.user.copyWith(nickname: cleanedNickname);
+      await saveSession(session.copyWith(user: updatedUser));
+      await preferences.remove(_nicknameKey);
+      return updatedUser;
+    }
+
+    await preferences.setString(_nicknameKey, cleanedNickname);
+    return fallbackUser.copyWith(nickname: cleanedNickname);
+  }
+
   Future<void> clear() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove(_sessionKey);
+    await preferences.remove(_nicknameKey);
     _cachedSession = null;
   }
 }

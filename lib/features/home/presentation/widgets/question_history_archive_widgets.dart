@@ -38,12 +38,29 @@ class QuestionHistoryFavoriteStarButton extends StatelessWidget {
   }
 }
 
+class QuestionHistoryDeleteButton extends StatelessWidget {
+  const QuestionHistoryDeleteButton({required this.onPressed, super.key});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: '질문 기록 삭제',
+      icon: const Icon(Icons.delete_outline_rounded),
+      color: AppTheme.coral,
+    );
+  }
+}
+
 class QuestionHistoryArchiveSummaryCard extends StatelessWidget {
   const QuestionHistoryArchiveSummaryCard({
     required this.totalCount,
     required this.filteredCount,
     required this.favoriteCount,
     required this.hasKeyword,
+    required this.ownerNickname,
     super.key,
   });
 
@@ -51,6 +68,7 @@ class QuestionHistoryArchiveSummaryCard extends StatelessWidget {
   final int filteredCount;
   final int favoriteCount;
   final bool hasKeyword;
+  final String? ownerNickname;
 
   @override
   Widget build(BuildContext context) {
@@ -63,43 +81,12 @@ class QuestionHistoryArchiveSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '질문 아카이브',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hasKeyword ? '찾고 싶은 질문만 바로 보세요' : '다시 꺼내볼 질문을 모아뒀어요',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontSize: 28, height: 1.15),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      hasKeyword
-                          ? '검색 결과와 전체 기록 수를 같이 보여줘서 지금 얼마나 좁혀졌는지 바로 알 수 있습니다.'
-                          : '질문 흐름을 한 번에 훑고, 필요한 문장만 빠르게 다시 찾을 수 있게 정리했습니다.',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(height: 1.55),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              _ArchiveAccentPill(
-                label: '검색 결과',
-                value: '${hasKeyword ? filteredCount : 0}개',
-              ),
-            ],
+            hasKeyword
+                ? '찾고 싶은 질문만 바로 보세요'
+                : '${_companionName(ownerNickname)} 함께 나눈\n이야기들을 모아뒀어요',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontSize: 28, height: 1.15),
           ),
           const SizedBox(height: 16),
           Row(
@@ -127,131 +114,34 @@ class QuestionHistoryArchiveSummaryCard extends StatelessWidget {
   }
 }
 
-class QuestionHistoryArchiveSectionHeader extends StatelessWidget {
-  const QuestionHistoryArchiveSectionHeader({
-    required this.totalCount,
-    required this.filteredCount,
-    required this.hasKeyword,
-    required this.selectedSortMode,
-    required this.isSortAscending,
-    required this.onSortChanged,
-    required this.onSortDirectionToggle,
-    super.key,
-  });
+String _companionName(String? ownerNickname) {
+  final trimmed = ownerNickname?.trim() ?? '';
+  if (trimmed.isEmpty) {
+    return '소라와';
+  }
 
-  final int totalCount;
-  final int filteredCount;
-  final bool hasKeyword;
-  final QuestionHistorySortMode selectedSortMode;
-  final bool isSortAscending;
-  final ValueChanged<QuestionHistorySortMode> onSortChanged;
-  final VoidCallback onSortDirectionToggle;
+  final lastRune = trimmed.runes.last;
+  if (lastRune >= 0xAC00 && lastRune <= 0xD7A3) {
+    final hasBatchim = (lastRune - 0xAC00) % 28 != 0;
+    return '$trimmed${hasBatchim ? '과' : '와'}';
+  }
+
+  return '$trimmed와';
+}
+
+class QuestionHistoryArchiveSectionHeader extends StatelessWidget {
+  const QuestionHistoryArchiveSectionHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final titleBlock = Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          hasKeyword ? '검색 결과' : '전체 질문 목록',
+          '전체 질문 목록',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
         ),
-        const SizedBox(height: 4),
-        Text(
-          hasKeyword
-              ? '총 $totalCount개 중 $filteredCount개가 일치합니다.'
-              : '$totalCount개의 질문을 순서대로 다시 볼 수 있어요.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
       ],
-    );
-
-    final sortControls = _QuestionSortControls(
-      selectedMode: selectedSortMode,
-      isAscending: isSortAscending,
-      onChanged: onSortChanged,
-      onDirectionToggle: onSortDirectionToggle,
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 460;
-
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: titleBlock),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: sortControls,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: titleBlock),
-            const SizedBox(width: 12),
-            sortControls,
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ArchiveAccentPill extends StatelessWidget {
-  const _ArchiveAccentPill({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceRaised.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.24)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontSize: 22, height: 1.1),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -310,120 +200,54 @@ class _ArchiveMetricTile extends StatelessWidget {
   }
 }
 
-class _QuestionSortControls extends StatelessWidget {
-  const _QuestionSortControls({
+class QuestionHistorySortControls extends StatelessWidget {
+  const QuestionHistorySortControls({
     required this.selectedMode,
-    required this.isAscending,
     required this.onChanged,
-    required this.onDirectionToggle,
+    super.key,
   });
 
   final QuestionHistorySortMode selectedMode;
-  final bool isAscending;
   final ValueChanged<QuestionHistorySortMode> onChanged;
-  final VoidCallback onDirectionToggle;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PopupMenuButton<QuestionHistorySortMode>(
-          initialValue: selectedMode,
-          tooltip: '정렬 기준 선택',
-          onSelected: onChanged,
-          itemBuilder: (context) => [
-            for (final mode in QuestionHistorySortMode.values)
-              PopupMenuItem<QuestionHistorySortMode>(
-                value: mode,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(mode.icon, size: 18, color: AppTheme.primaryDark),
-                    const SizedBox(width: 8),
-                    Text(mode.label),
-                  ],
-                ),
-              ),
-          ],
-          child: _SortControlButton(
-            icon: selectedMode.icon,
-            label: selectedMode.label,
-            trailingIcon: Icons.keyboard_arrow_down_rounded,
+    return PopupMenuButton<QuestionHistorySortMode>(
+      initialValue: selectedMode,
+      tooltip: '정렬 기준 선택',
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final mode in QuestionHistorySortMode.values)
+          PopupMenuItem<QuestionHistorySortMode>(
+            value: mode,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(mode.icon, size: 18, color: AppTheme.primaryDark),
+                const SizedBox(width: 8),
+                Text(mode.label),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-        _SortDirectionButton(
-          isAscending: isAscending,
-          onPressed: onDirectionToggle,
-        ),
       ],
-    );
-  }
-}
-
-class _SortDirectionButton extends StatelessWidget {
-  const _SortDirectionButton({
-    required this.isAscending,
-    required this.onPressed,
-  });
-
-  final bool isAscending;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.9),
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onPressed,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(
-            isAscending
-                ? Icons.arrow_upward_rounded
-                : Icons.arrow_downward_rounded,
-            color: AppTheme.primaryDark,
-            size: 20,
-          ),
-        ),
+      child: _SortControlButton(
+        icon: selectedMode.icon,
+        label: selectedMode.label,
       ),
     );
   }
 }
 
 class _SortControlButton extends StatelessWidget {
-  const _SortControlButton({
-    required this.icon,
-    required this.label,
-    this.trailingIcon,
-    this.onTap,
-  });
+  const _SortControlButton({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
-  final IconData? trailingIcon;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.shadowTint.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -436,25 +260,7 @@ class _SortControlButton extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          if (trailingIcon != null) ...[
-            const SizedBox(width: 4),
-            Icon(trailingIcon, size: 18, color: AppTheme.textSecondary),
-          ],
         ],
-      ),
-    );
-
-    if (onTap == null) {
-      return content;
-    }
-
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: content,
       ),
     );
   }

@@ -14,11 +14,13 @@ class QuestionHistoryScreen extends StatefulWidget {
     super.key,
     this.loadFromApi = false,
     this.debateApiService,
+    this.ownerNickname,
   });
 
   final List<QuestionHistoryEntry> questions;
   final bool loadFromApi;
   final DebateApiService? debateApiService;
+  final String? ownerNickname;
 
   @override
   State<QuestionHistoryScreen> createState() => _QuestionHistoryScreenState();
@@ -31,13 +33,19 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
   String _keyword = '';
   List<QuestionHistoryEntry>? _remoteQuestions;
   final Set<String> _favoriteQuestionKeys = <String>{};
+  final Set<int> _selectedDebateIds = <int>{};
   QuestionHistorySortMode _sortMode = QuestionHistorySortMode.date;
   bool _isSortAscending = false;
   bool _isLoading = false;
+  bool _isDeletingBulk = false;
   String? _loadErrorMessage;
 
-  List<QuestionHistoryEntry> get _questions =>
-      _remoteQuestions ?? widget.questions;
+  List<QuestionHistoryEntry> get _questions {
+    if (widget.loadFromApi) {
+      return _remoteQuestions ?? const <QuestionHistoryEntry>[];
+    }
+    return _remoteQuestions ?? widget.questions;
+  }
 
   List<_QuestionArchiveEntry> get _filteredQuestions {
     final rawKeyword = _keyword.trim().toLowerCase();
@@ -51,24 +59,35 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     final filteredEntries = keyword.isEmpty
         ? entries
         : entries.where((entry) {
-      final rawQuestion = entry.question.toLowerCase();
-      final questionText = _compactSearchText(rawQuestion);
-      final questionInitials = _toHangulInitials(questionText);
-      final questionWordInitials = _toHangulWordInitials(rawQuestion);
+            final rawQuestion = entry.question.toLowerCase();
+            final questionText = _compactSearchText(rawQuestion);
+            final questionInitials = _toHangulInitials(questionText);
+            final questionWordInitials = _toHangulWordInitials(rawQuestion);
 
-      return questionText.contains(keyword) ||
-          questionInitials.contains(keyword) ||
-          questionInitials.contains(keywordInitials) ||
-          questionWordInitials.contains(keyword) ||
-          questionWordInitials.contains(keywordInitials);
-    }).toList();
+            return questionText.contains(keyword) ||
+                questionInitials.contains(keyword) ||
+                questionInitials.contains(keywordInitials) ||
+                questionWordInitials.contains(keyword) ||
+                questionWordInitials.contains(keywordInitials);
+          }).toList();
 
     return _sortEntries(filteredEntries);
   }
 
   int get _favoriteCount => _questions.where(_isFavorite).length;
+  List<QuestionHistoryEntry> get _deletableQuestions => [
+    for (final question in _questions)
+      if (question.debateId != null) question,
+  ];
+  List<QuestionHistoryEntry> get _selectedDeletableQuestions => [
+    for (final question in _deletableQuestions)
+      if (_isSelected(question)) question,
+  ];
+  int get _selectedDebateCount => _selectedDeletableQuestions.length;
 
-  List<_QuestionArchiveEntry> _sortEntries(List<_QuestionArchiveEntry> entries) {
+  List<_QuestionArchiveEntry> _sortEntries(
+    List<_QuestionArchiveEntry> entries,
+  ) {
     final sortedEntries = [...entries];
 
     // 원본 데이터는 수정하지 않고 화면 표시용 리스트만 정렬한다.
@@ -200,12 +219,6 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     });
   }
 
-  void _toggleSortDirection() {
-    setState(() {
-      _isSortAscending = !_isSortAscending;
-    });
-  }
-
   String _favoriteKeyFor(QuestionHistoryEntry entry) {
     final debateId = entry.debateId;
     if (debateId != null) {
@@ -219,6 +232,10 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
   }
 
   void _toggleFavorite(QuestionHistoryEntry entry) {
+    if (_isDeletingBulk) {
+      return;
+    }
+
     final key = _favoriteKeyFor(entry);
     setState(() {
       if (!_favoriteQuestionKeys.remove(key)) {
@@ -231,7 +248,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     showQuestionHistoryActionSheet(
       context,
       entry,
-      onDelete: entry.debateId == null ? null : _deleteDebate,
+      onDelete: entry.debateId == null ? null : _confirmDeleteDebate,
     );
   }
 
@@ -247,7 +264,11 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
         return;
       }
       setState(() {
-        _remoteQuestions = page.items.map(_entryFromDebateSummary).toList();
+        _remoteQuestions = page.items
+            .map(_entryFromDebateSummary)
+            .whereType<QuestionHistoryEntry>()
+            .toList();
+        _selectedDebateIds.clear();
         _isLoading = false;
       });
     } catch (error) {
@@ -264,27 +285,137 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     }
   }
 
-  QuestionHistoryEntry _entryFromDebateSummary(DebateSummary summary) {
+  QuestionHistoryEntry? _entryFromDebateSummary(DebateSummary summary) {
+    final answer = summary.finalVerdict?.trim() ?? '';
+    if (answer.isEmpty) {
+      return null;
+    }
+
     return QuestionHistoryEntry(
       question: summary.topic,
-      answer: summary.finalVerdict ?? _fallbackAnswerFor(summary),
+      answer: answer,
       debateId: summary.id,
       status: summary.status,
       createdAt: summary.createdAt,
     );
   }
 
-  String _fallbackAnswerFor(DebateSummary summary) {
-    return switch (summary.status) {
-      DebateStatus.running => '토론이 진행 중입니다.',
-      DebateStatus.cancelled => '취소된 토론입니다.',
-      DebateStatus.failed =>
-        summary.errorCode == null
-            ? '토론이 실패했습니다.'
-            : '토론이 실패했습니다. ${summary.errorCode}',
-      DebateStatus.degraded => '일부 단계가 실패했지만 결과가 저장되었습니다.',
-      DebateStatus.done => '저장된 최종 답변이 없습니다.',
-    };
+  Future<void> _confirmDeleteDebate(QuestionHistoryEntry entry) async {
+    if (_isDeletingBulk) {
+      return;
+    }
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('질문 기록 삭제'),
+          content: Text('이 질문 기록을 삭제하시겠어요?\n\n${entry.question}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    await _deleteDebate(entry);
+  }
+
+  bool _isSelected(QuestionHistoryEntry entry) {
+    final debateId = entry.debateId;
+    return debateId != null && _selectedDebateIds.contains(debateId);
+  }
+
+  void _toggleDebateSelection(QuestionHistoryEntry entry, bool? value) {
+    final debateId = entry.debateId;
+    if (debateId == null || _isDeletingBulk) {
+      return;
+    }
+
+    setState(() {
+      if (value == true) {
+        _selectedDebateIds.add(debateId);
+      } else {
+        _selectedDebateIds.remove(debateId);
+      }
+    });
+  }
+
+  Future<void> _confirmDeleteSelectedDebates() async {
+    if (_isDeletingBulk || _selectedDeletableQuestions.isEmpty) {
+      return;
+    }
+
+    final selectedCount = _selectedDeletableQuestions.length;
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('선택한 질문 기록 삭제'),
+          content: Text('선택한 질문 기록 $selectedCount개를 삭제하시겠어요?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    await _deleteSelectedDebates();
+  }
+
+  Future<void> _confirmDeleteAllDebates() async {
+    if (_isDeletingBulk || _deletableQuestions.isEmpty) {
+      return;
+    }
+
+    final deletableCount = _deletableQuestions.length;
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('전체 질문 기록 삭제'),
+          content: Text('삭제 가능한 질문 기록 $deletableCount개를 모두 삭제하시겠어요?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('전체 삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    await _deleteAllDebates();
   }
 
   Future<void> _deleteDebate(QuestionHistoryEntry entry) async {
@@ -299,11 +430,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
         return;
       }
       setState(() {
-        _favoriteQuestionKeys.remove(_favoriteKeyFor(entry));
-        _remoteQuestions = [
-          for (final question in _questions)
-            if (question.debateId != debateId) question,
-        ];
+        _removeDeletedDebateIds({debateId});
       });
       ScaffoldMessenger.of(
         context,
@@ -321,10 +448,92 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     }
   }
 
+  Future<void> _deleteSelectedDebates() async {
+    final selectedEntries = _selectedDeletableQuestions;
+    if (selectedEntries.isEmpty) {
+      return;
+    }
+
+    await _deleteDebateBatch(
+      entries: selectedEntries,
+      successMessage: '선택한 질문 기록을 삭제했습니다.',
+    );
+  }
+
+  Future<void> _deleteAllDebates() async {
+    final deletableEntries = _deletableQuestions;
+    if (deletableEntries.isEmpty) {
+      return;
+    }
+
+    await _deleteDebateBatch(
+      entries: deletableEntries,
+      successMessage: '질문 기록을 모두 삭제했습니다.',
+    );
+  }
+
+  Future<void> _deleteDebateBatch({
+    required List<QuestionHistoryEntry> entries,
+    required String successMessage,
+  }) async {
+    setState(() {
+      _isDeletingBulk = true;
+    });
+
+    final deletedIds = <int>{};
+
+    try {
+      for (final entry in entries) {
+        final debateId = entry.debateId;
+        if (debateId == null) {
+          continue;
+        }
+
+        try {
+          await _debateApiService.deleteDebate(debateId);
+          deletedIds.add(debateId);
+        } catch (_) {
+          // 개별 삭제 실패는 나머지 항목까지 시도한 뒤 요약 메시지로 알린다.
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeletingBulk = false;
+          if (deletedIds.isNotEmpty) {
+            _removeDeletedDebateIds(deletedIds);
+          }
+        });
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final failedCount = entries.length - deletedIds.length;
+    final message = failedCount == 0
+        ? successMessage
+        : '일부 질문 기록만 삭제했습니다. 성공 ${deletedIds.length}개, 실패 $failedCount개';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _removeDeletedDebateIds(Set<int> deletedIds) {
+    _remoteQuestions = [
+      for (final question in _questions)
+        if (!deletedIds.contains(question.debateId)) question,
+    ];
+    _favoriteQuestionKeys.removeWhere((key) {
+      return deletedIds.any((debateId) => key == 'debate:$debateId');
+    });
+    _selectedDebateIds.removeWhere(deletedIds.contains);
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredQuestions = _filteredQuestions;
-    final hasKeyword = _keyword.trim().isNotEmpty;
     final totalCount = _questions.length;
     final favoriteCount = _favoriteCount;
 
@@ -365,9 +574,11 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                         totalCount: totalCount,
                         filteredCount: filteredQuestions.length,
                         favoriteCount: favoriteCount,
-                        hasKeyword: hasKeyword,
+                        hasKeyword: _keyword.trim().isNotEmpty,
+                        ownerNickname: widget.ownerNickname,
                       ),
-                      if (_isLoading || _loadErrorMessage != null) ...[
+                      if ((_isLoading || _loadErrorMessage != null) &&
+                          totalCount > 0) ...[
                         const SizedBox(height: 12),
                         _ArchiveLoadStatus(
                           isLoading: _isLoading,
@@ -375,86 +586,40 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                           onRetry: _loadDebates,
                         ),
                       ],
-                      const SizedBox(height: 16),
-                      OceanPanel(
-                        padding: const EdgeInsets.all(16),
-                        color: Colors.white.withValues(alpha: 0.78),
-                        borderColor: AppTheme.skyBlue.withValues(alpha: 0.3),
-                        radius: 30,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _QuestionSearchBox(
-                              controller: _searchController,
-                              onChanged: _handleSearchChanged,
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.tips_and_updates_outlined,
-                                  color: AppTheme.primaryDark.withValues(
-                                    alpha: 0.72,
-                                  ),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '띄어쓰기 없이, 초성으로도 질문을 찾을 수 있어요.',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppTheme.textSecondary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
                       const SizedBox(height: 20),
-                      QuestionHistoryArchiveSectionHeader(
-                        totalCount: totalCount,
-                        filteredCount: filteredQuestions.length,
-                        hasKeyword: hasKeyword,
-                        selectedSortMode: _sortMode,
-                        isSortAscending: _isSortAscending,
-                        onSortChanged: _handleSortChanged,
-                        onSortDirectionToggle: _toggleSortDirection,
-                      ),
+                      const QuestionHistoryArchiveSectionHeader(),
                       const SizedBox(height: 12),
-                      if (filteredQuestions.isEmpty)
+                      _ArchiveSearchToolbar(
+                        controller: _searchController,
+                        onChanged: _handleSearchChanged,
+                        selectedSortMode: _sortMode,
+                        onSortChanged: _handleSortChanged,
+                        hasDeleteAction: _deletableQuestions.isNotEmpty,
+                        selectedDeleteCount: _selectedDebateCount,
+                        isDeletingBulk: _isDeletingBulk,
+                        onDeleteSelected: _confirmDeleteSelectedDebates,
+                        onDeleteAll: _confirmDeleteAllDebates,
+                      ),
+                      const SizedBox(height: 16),
+                      if (totalCount == 0)
+                        _EmptyHistoryState(
+                          isLoading: _isLoading,
+                          message: _loadErrorMessage,
+                          onRetry: widget.loadFromApi ? _loadDebates : null,
+                        )
+                      else if (filteredQuestions.isEmpty)
                         _EmptySearchResult(onClear: _clearSearch)
                       else
                         _ArchiveQuestionList(
                           entries: filteredQuestions,
                           onQuestionTap: _openQuestionActions,
+                          isSelected: _isSelected,
+                          onSelectionToggle: _toggleDebateSelection,
                           isFavorite: _isFavorite,
                           onFavoriteToggle: _toggleFavorite,
+                          onDeleteRequested: _confirmDeleteDebate,
                         ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 24,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 240),
-                  child: OceanPillButton(
-                    label: '채팅으로 돌아가기',
-                    icon: Icons.chat_bubble_rounded,
-                    backgroundColor: AppTheme.deepNavy,
-                    foregroundColor: Colors.white,
-                    onPressed: () => Navigator.of(context).maybePop(),
                   ),
                 ),
               ),
@@ -517,18 +682,144 @@ class _QuestionSearchBox extends StatelessWidget {
   }
 }
 
+class _ArchiveSearchToolbar extends StatelessWidget {
+  const _ArchiveSearchToolbar({
+    required this.controller,
+    required this.onChanged,
+    required this.selectedSortMode,
+    required this.onSortChanged,
+    required this.hasDeleteAction,
+    required this.selectedDeleteCount,
+    required this.isDeletingBulk,
+    required this.onDeleteSelected,
+    required this.onDeleteAll,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final QuestionHistorySortMode selectedSortMode;
+  final ValueChanged<QuestionHistorySortMode> onSortChanged;
+  final bool hasDeleteAction;
+  final int selectedDeleteCount;
+  final bool isDeletingBulk;
+  final VoidCallback onDeleteSelected;
+  final VoidCallback onDeleteAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final searchBox = _QuestionSearchBox(
+      controller: controller,
+      onChanged: onChanged,
+    );
+
+    final sortControls = QuestionHistorySortControls(
+      selectedMode: selectedSortMode,
+      onChanged: onSortChanged,
+    );
+    final deleteAction = hasDeleteAction
+        ? _DeleteActionButton(
+            label: selectedDeleteCount > 0 ? '선택 항목 삭제하기' : '전체 삭제',
+            icon: selectedDeleteCount > 0
+                ? Icons.delete_outline_rounded
+                : Icons.delete_sweep_rounded,
+            isDeleting: isDeletingBulk,
+            onPressed: selectedDeleteCount > 0 ? onDeleteSelected : onDeleteAll,
+          )
+        : null;
+
+    return OceanPanel(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white.withValues(alpha: 0.78),
+      borderColor: AppTheme.skyBlue.withValues(alpha: 0.3),
+      radius: 30,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          searchBox,
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                sortControls,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: deleteAction == null
+                        ? const SizedBox.shrink()
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [deleteAction],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeleteActionButton extends StatelessWidget {
+  const _DeleteActionButton({
+    required this.label,
+    required this.icon,
+    required this.isDeleting,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isDeleting;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: isDeleting ? null : onPressed,
+      icon: isDeleting
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2.2),
+            )
+          : Icon(icon, size: 18),
+      label: Text(isDeleting ? '삭제 중...' : label),
+      style: TextButton.styleFrom(
+        foregroundColor: AppTheme.coral,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
 class _ArchiveQuestionList extends StatelessWidget {
   const _ArchiveQuestionList({
     required this.entries,
     required this.onQuestionTap,
+    required this.isSelected,
+    required this.onSelectionToggle,
     required this.isFavorite,
     required this.onFavoriteToggle,
+    required this.onDeleteRequested,
   });
 
   final List<_QuestionArchiveEntry> entries;
   final ValueChanged<QuestionHistoryEntry> onQuestionTap;
+  final bool Function(QuestionHistoryEntry entry) isSelected;
+  final void Function(QuestionHistoryEntry entry, bool? value)
+  onSelectionToggle;
   final bool Function(QuestionHistoryEntry entry) isFavorite;
   final ValueChanged<QuestionHistoryEntry> onFavoriteToggle;
+  final Future<void> Function(QuestionHistoryEntry entry) onDeleteRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -538,18 +829,141 @@ class _ArchiveQuestionList extends StatelessWidget {
         for (var index = 0; index < entries.length; index++) ...[
           HistoryTile(
             question: entries[index].question,
-            index: entries[index].number,
             backgroundColor: Colors.white.withValues(alpha: 0.92),
             borderColor: AppTheme.skyBlue.withValues(alpha: 0.14),
-            trailing: QuestionHistoryFavoriteStarButton(
-              isFavorite: isFavorite(entries[index].entry),
-              onPressed: () => onFavoriteToggle(entries[index].entry),
+            showLeading: false,
+            leading: entries[index].entry.debateId == null
+                ? null
+                : _ArchiveSelectionCheckbox(
+                    value: isSelected(entries[index].entry),
+                    onChanged: (value) =>
+                        onSelectionToggle(entries[index].entry, value),
+                  ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QuestionHistoryFavoriteStarButton(
+                  isFavorite: isFavorite(entries[index].entry),
+                  onPressed: () => onFavoriteToggle(entries[index].entry),
+                ),
+                if (entries[index].entry.debateId != null)
+                  QuestionHistoryDeleteButton(
+                    onPressed: () => onDeleteRequested(entries[index].entry),
+                  ),
+              ],
             ),
             onTap: () => onQuestionTap(entries[index].entry),
           ),
           if (index != entries.length - 1) const SizedBox(height: 10),
         ],
       ],
+    );
+  }
+}
+
+class _ArchiveSelectionCheckbox extends StatelessWidget {
+  const _ArchiveSelectionCheckbox({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.scale(
+      scale: 0.88,
+      child: Checkbox(
+        value: value,
+        onChanged: onChanged,
+        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        side: BorderSide(
+          color: value
+              ? AppTheme.primaryDark
+              : AppTheme.skyBlue.withValues(alpha: 0.55),
+          width: 1.4,
+        ),
+        checkColor: Colors.white,
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTheme.primaryDark;
+          }
+          return Colors.white.withValues(alpha: 0.92);
+        }),
+      ),
+    );
+  }
+}
+
+class _EmptyHistoryState extends StatelessWidget {
+  const _EmptyHistoryState({
+    required this.isLoading,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final bool isLoading;
+  final String? message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = isLoading
+        ? '질문 기록을 불러오는 중입니다.'
+        : message != null
+        ? '질문 기록을 불러오지 못했습니다.'
+        : '아직 저장된 질문 기록이 없습니다.';
+    final body = isLoading
+        ? '실제 저장된 질문만 정리해서 가져오고 있어요.'
+        : message ?? '새 토론을 시작하면 실제 질문과 답변이 여기에 쌓입니다.';
+
+    return OceanPanel(
+      padding: const EdgeInsets.all(20),
+      color: Colors.white.withValues(alpha: 0.82),
+      borderColor: AppTheme.skyBlue.withValues(alpha: 0.22),
+      radius: 30,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isLoading)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.6),
+            )
+          else
+            const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppTheme.primaryDark,
+              size: 42,
+            ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.left,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            textAlign: TextAlign.left,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.55),
+          ),
+          if (!isLoading && onRetry != null) ...[
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('다시 불러오기'),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -631,22 +1045,11 @@ class _ArchiveTopBar extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '질문 기록',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              Text(
-                '다시 찾는 질문 아카이브',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontSize: 20),
-              ),
-            ],
+          child: Text(
+            '질문 기록',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontSize: 20),
           ),
         ),
       ],

@@ -93,6 +93,72 @@ void main() {
       expect(events.last.engineStatus, 'ok');
     });
 
+    test('SSE 연결이 500이면 재시도 후 성공할 수 있다', () async {
+      await saveSession();
+      var attemptCount = 0;
+
+      final service = DebateApiService(
+        streamRetryDelays: const [Duration.zero],
+        httpClient: MockClient.streaming((request, bodyStream) async {
+          attemptCount += 1;
+
+          if (attemptCount == 1) {
+            return http.StreamedResponse(
+              Stream<List<int>>.fromIterable([
+                utf8.encode('{"message":"temporary failure"}'),
+              ]),
+              500,
+              headers: {'Content-Type': 'application/json'},
+            );
+          }
+
+          return http.StreamedResponse(
+            Stream<List<int>>.fromIterable([
+              utf8.encode('event: final\n'),
+              utf8.encode('data: {"verdict":"PRO","status":"ok"}\n\n'),
+            ]),
+            200,
+            headers: {'Content-Type': 'text/event-stream'},
+          );
+        }),
+      );
+
+      final events = await service.streamDebate(42).toList();
+
+      expect(attemptCount, 2);
+      expect(events.single.isFinal, isTrue);
+      expect(events.single.verdict, 'PRO');
+    });
+
+    test('SSE 연결이 401이면 재시도하지 않는다', () async {
+      await saveSession();
+      var attemptCount = 0;
+
+      final service = DebateApiService(
+        streamRetryDelays: const [Duration.zero],
+        httpClient: MockClient.streaming((request, bodyStream) async {
+          attemptCount += 1;
+          return http.StreamedResponse(
+            Stream<List<int>>.fromIterable([
+              utf8.encode('{"message":"unauthorized"}'),
+            ]),
+            401,
+            headers: {'Content-Type': 'application/json'},
+          );
+        }),
+      );
+
+      await expectLater(
+        service.streamDebate(42).toList(),
+        throwsA(
+          isA<DebateApiException>()
+              .having((error) => error.statusCode, 'statusCode', 401)
+              .having((error) => error.message, 'message', 'unauthorized'),
+        ),
+      );
+      expect(attemptCount, 1);
+    });
+
     test('토론 목록에서 finalVerdict와 커서를 매핑한다', () async {
       await saveSession();
 

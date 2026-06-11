@@ -61,6 +61,24 @@ class AppUser {
   final String loginProvider;
   final bool isDemo;
 
+  AppUser copyWith({
+    String? nickname,
+    String? email,
+    String? profileImageUrl,
+    String? loginProvider,
+    bool? isDemo,
+  }) {
+    return AppUser(
+      nickname: _cleanOrFallback(nickname, this.nickname),
+      email: email == null ? this.email : _cleanOptional(email),
+      profileImageUrl: profileImageUrl == null
+          ? this.profileImageUrl
+          : _cleanOptional(profileImageUrl),
+      loginProvider: _cleanOrFallback(loginProvider, this.loginProvider),
+      isDemo: isDemo ?? this.isDemo,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'nickname': nickname,
