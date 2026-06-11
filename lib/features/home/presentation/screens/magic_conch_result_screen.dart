@@ -42,6 +42,7 @@ class MagicConchResultScreen extends StatefulWidget {
 class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   final _followUpController = TextEditingController();
   final List<DebateSseEvent> _streamEvents = [];
+  final List<_FollowUpTurn> _followUpTurns = [];
 
   late final DebateApiService _debateApiService;
   late bool _isAnswerReady;
@@ -185,11 +186,15 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
   }
 
   void _openEvaluationResult() {
+    _openEvaluationResultFor(_trimmedQuestion, _resolvedAnswer);
+  }
+
+  void _openEvaluationResultFor(String question, String answer) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => EvaluationResultScreen(
-          question: _trimmedQuestion,
-          answer: _resolvedAnswer,
+          question: question,
+          answer: answer,
         ),
       ),
     );
@@ -240,16 +245,23 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       return;
     }
 
-    final contextPayload = _buildFollowUpContext(followUpQuestion);
-    final mode =
-        contextPayload['mode'] ?? QuestionRequestMode.followUp.apiValue;
-    final followUpPreview = contextPayload['followUpQuestion'] ?? '';
+    _buildFollowUpContext(followUpQuestion);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('추가 질문 기능은 API 연결 전입니다. mode=$mode: $followUpPreview'),
-      ),
-    );
+    setState(() {
+      _followUpTurns.add(
+        _FollowUpTurn(
+          question: followUpQuestion,
+          answer: _buildFollowUpAnswer(followUpQuestion),
+        ),
+      );
+      _followUpController.clear();
+      _showFollowUpInput = false;
+    });
+  }
+
+  String _buildFollowUpAnswer(String followUpQuestion) {
+    // TODO: API 연결 후 follow_up mode 응답으로 교체한다.
+    return '마법의 소라고동은 추가 질문에도 이렇게 대답했어요. 지금은 API 연결 전이라 임시 답변을 보여주고 있어요.';
   }
 
   @override
@@ -342,6 +354,19 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                               : null,
                         ),
                       ],
+                      if (_followUpTurns.isNotEmpty) ...[
+                        const SizedBox(height: 18),
+                        for (final turn in _followUpTurns) ...[
+                          _FollowUpTurnCard(
+                            turn: turn,
+                            onOpenEvaluation: () => _openEvaluationResultFor(
+                              turn.question,
+                              turn.answer,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                      ],
                       if (_isLiveDebate && !_isAnswerReady) ...[
                         const SizedBox(height: 18),
                         OceanPillButton(
@@ -354,25 +379,24 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
                     ],
                     if (_hasQuestion && _isAnswerReady) ...[
                       const SizedBox(height: 28),
-                      OceanPillButton(
-                        label: '추가로 질문하기',
-                        icon: Icons.add_comment_rounded,
-                        backgroundColor: AppTheme.primaryLight,
-                        onPressed: _showAdditionalQuestionInput,
-                      ),
-                      if (_showFollowUpInput) ...[
-                        const SizedBox(height: 14),
+                      if (_showFollowUpInput)
                         _FollowUpQuestionBox(
                           controller: _followUpController,
                           onSubmit: _submitFollowUpQuestion,
+                        )
+                      else
+                        OceanPillButton(
+                          label: '추가로 질문하기',
+                          icon: Icons.add_comment_rounded,
+                          backgroundColor: AppTheme.primaryLight,
+                          onPressed: _showAdditionalQuestionInput,
                         ),
-                      ],
                       const SizedBox(height: 14),
                     ] else ...[
                       const SizedBox(height: 32),
                     ],
                     OceanPillButton(
-                      label: '새 질문하기',
+                      label: _hasInitialAnswer ? '질문목록으로 돌아가기' : '새 질문하기',
                       icon: Icons.keyboard_return_rounded,
                       backgroundColor: AppTheme.deepNavy,
                       foregroundColor: Colors.white,
@@ -384,6 +408,61 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FollowUpTurn {
+  const _FollowUpTurn({required this.question, required this.answer});
+
+  final String question;
+  final String answer;
+}
+
+class _FollowUpTurnCard extends StatelessWidget {
+  const _FollowUpTurnCard({
+    required this.turn,
+    required this.onOpenEvaluation,
+  });
+
+  final _FollowUpTurn turn;
+  final VoidCallback onOpenEvaluation;
+
+  @override
+  Widget build(BuildContext context) {
+    return OceanPanel(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white.withValues(alpha: 0.72),
+      borderColor: AppTheme.skyBlue.withValues(alpha: 0.26),
+      radius: 28,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '추가 질문',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppTheme.primaryDark,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            turn.question,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _TemporaryAnswerCard(
+            answer: turn.answer,
+            onTap: onOpenEvaluation,
+          ),
+        ],
       ),
     );
   }
@@ -534,37 +613,108 @@ class _FollowUpQuestionBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OceanPanel(
-      padding: const EdgeInsets.all(12),
-      color: Colors.white.withValues(alpha: 0.68),
-      child: Column(
-        children: [
-          TextField(
-            controller: controller,
-            minLines: 2,
-            maxLines: 4,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => onSubmit(),
-            decoration: InputDecoration(
-              hintText: '추가 질문을 입력해주세요',
-              prefixIcon: const Icon(Icons.edit_note_rounded),
-              filled: true,
-              fillColor: AppTheme.cream.withValues(alpha: 0.92),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(22),
-                borderSide: const BorderSide(color: AppTheme.border),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 420;
+
+        return OceanPanel(
+          padding: EdgeInsets.all(isCompact ? 8 : 10),
+          color: Colors.white.withValues(alpha: 0.78),
+          borderColor: AppTheme.skyBlue.withValues(alpha: 0.4),
+          radius: 30,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 52,
+                        maxHeight: 94,
+                      ),
+                      child: TextField(
+                        controller: controller,
+                        minLines: 1,
+                        maxLines: 3,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => onSubmit(),
+                        decoration: InputDecoration(
+                          hintText: '추가 질문을 입력해주세요',
+                          prefixIcon: const Icon(
+                            Icons.edit_note_rounded,
+                            size: 22,
+                          ),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 42,
+                            minHeight: 42,
+                          ),
+                          contentPadding: const EdgeInsets.fromLTRB(
+                            2,
+                            15,
+                            16,
+                            15,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.94),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(28),
+                            borderSide: BorderSide(
+                              color: AppTheme.skyBlue.withValues(alpha: 0.28),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(28),
+                            borderSide: BorderSide(
+                              color: AppTheme.skyBlue.withValues(alpha: 0.28),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(28),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryTeal,
+                              width: 1.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Semantics(
+                    button: true,
+                    label: '추가 질문 보내기',
+                    child: SizedBox.square(
+                      dimension: isCompact ? 48 : 52,
+                      child: Material(
+                        color: AppTheme.skyBlue,
+                        shape: const CircleBorder(),
+                        elevation: 0,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: onSubmit,
+                          child: Center(
+                            child: Transform.translate(
+                              offset: const Offset(1.5, 0),
+                              child: const Icon(
+                                Icons.send_rounded,
+                                color: AppTheme.textPrimary,
+                                size: 21,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 12),
-          OceanPillButton(
-            label: '추가 질문 보내기',
-            icon: Icons.send_rounded,
-            backgroundColor: AppTheme.primaryLight,
-            onPressed: onSubmit,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

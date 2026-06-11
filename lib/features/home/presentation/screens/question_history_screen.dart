@@ -5,6 +5,7 @@ import 'package:magicsorafront/features/debate/models/debate_models.dart';
 import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
 import 'package:magicsorafront/features/home/models/question_history_entry.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.dart';
+import 'package:magicsorafront/features/home/presentation/widgets/question_history_archive_widgets.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/question_history_action_sheet.dart';
 
 class QuestionHistoryScreen extends StatefulWidget {
@@ -29,6 +30,9 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
 
   String _keyword = '';
   List<QuestionHistoryEntry>? _remoteQuestions;
+  final Set<String> _favoriteQuestionKeys = <String>{};
+  QuestionHistorySortMode _sortMode = QuestionHistorySortMode.date;
+  bool _isSortAscending = false;
   bool _isLoading = false;
   String? _loadErrorMessage;
 
@@ -44,11 +48,9 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
         _QuestionArchiveEntry(number: index + 1, entry: _questions[index]),
     ];
 
-    if (keyword.isEmpty) {
-      return entries;
-    }
-
-    return entries.where((entry) {
+    final filteredEntries = keyword.isEmpty
+        ? entries
+        : entries.where((entry) {
       final rawQuestion = entry.question.toLowerCase();
       final questionText = _compactSearchText(rawQuestion);
       final questionInitials = _toHangulInitials(questionText);
@@ -60,6 +62,57 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
           questionWordInitials.contains(keyword) ||
           questionWordInitials.contains(keywordInitials);
     }).toList();
+
+    return _sortEntries(filteredEntries);
+  }
+
+  int get _favoriteCount => _questions.where(_isFavorite).length;
+
+  List<_QuestionArchiveEntry> _sortEntries(List<_QuestionArchiveEntry> entries) {
+    final sortedEntries = [...entries];
+
+    // 원본 데이터는 수정하지 않고 화면 표시용 리스트만 정렬한다.
+    switch (_sortMode) {
+      case QuestionHistorySortMode.date:
+        sortedEntries.sort(_compareByDate);
+      case QuestionHistorySortMode.favorite:
+        sortedEntries.sort((a, b) {
+          final aFavorite = _isFavorite(a.entry);
+          final bFavorite = _isFavorite(b.entry);
+          if (aFavorite != bFavorite) {
+            return bFavorite ? 1 : -1;
+          }
+          return _compareByDate(a, b);
+        });
+      case QuestionHistorySortMode.text:
+        sortedEntries.sort((a, b) {
+          final compared = a.question.compareTo(b.question);
+          if (compared != 0) {
+            return _isSortAscending ? compared : -compared;
+          }
+          return a.number.compareTo(b.number);
+        });
+    }
+
+    return sortedEntries;
+  }
+
+  int _compareByDate(_QuestionArchiveEntry a, _QuestionArchiveEntry b) {
+    final aDate = a.entry.createdAt;
+    final bDate = b.entry.createdAt;
+    final fallbackCompare = a.number.compareTo(b.number);
+
+    if (aDate != null && bDate != null) {
+      final compared = aDate.compareTo(bDate);
+      return _isSortAscending ? compared : -compared;
+    }
+    if (aDate != null) {
+      return _isSortAscending ? 1 : -1;
+    }
+    if (bDate != null) {
+      return _isSortAscending ? -1 : 1;
+    }
+    return _isSortAscending ? -fallbackCompare : fallbackCompare;
   }
 
   String _compactSearchText(String value) {
@@ -140,6 +193,40 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     _handleSearchChanged('');
   }
 
+  void _handleSortChanged(QuestionHistorySortMode mode) {
+    setState(() {
+      _sortMode = mode;
+      _isSortAscending = false;
+    });
+  }
+
+  void _toggleSortDirection() {
+    setState(() {
+      _isSortAscending = !_isSortAscending;
+    });
+  }
+
+  String _favoriteKeyFor(QuestionHistoryEntry entry) {
+    final debateId = entry.debateId;
+    if (debateId != null) {
+      return 'debate:$debateId';
+    }
+    return 'local:${entry.question}::${entry.answer}';
+  }
+
+  bool _isFavorite(QuestionHistoryEntry entry) {
+    return _favoriteQuestionKeys.contains(_favoriteKeyFor(entry));
+  }
+
+  void _toggleFavorite(QuestionHistoryEntry entry) {
+    final key = _favoriteKeyFor(entry);
+    setState(() {
+      if (!_favoriteQuestionKeys.remove(key)) {
+        _favoriteQuestionKeys.add(key);
+      }
+    });
+  }
+
   void _openQuestionActions(QuestionHistoryEntry entry) {
     showQuestionHistoryActionSheet(
       context,
@@ -212,6 +299,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
         return;
       }
       setState(() {
+        _favoriteQuestionKeys.remove(_favoriteKeyFor(entry));
         _remoteQuestions = [
           for (final question in _questions)
             if (question.debateId != debateId) question,
@@ -238,6 +326,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     final filteredQuestions = _filteredQuestions;
     final hasKeyword = _keyword.trim().isNotEmpty;
     final totalCount = _questions.length;
+    final favoriteCount = _favoriteCount;
 
     return Scaffold(
       body: OceanShellBackground(
@@ -269,13 +358,13 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _ArchiveTopBar(
-                        totalCount: totalCount,
                         onBack: () => Navigator.of(context).maybePop(),
                       ),
                       const SizedBox(height: 18),
-                      _ArchiveSummaryCard(
+                      QuestionHistoryArchiveSummaryCard(
                         totalCount: totalCount,
                         filteredCount: filteredQuestions.length,
+                        favoriteCount: favoriteCount,
                         hasKeyword: hasKeyword,
                       ),
                       if (_isLoading || _loadErrorMessage != null) ...[
@@ -329,10 +418,14 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      _ArchiveSectionHeader(
+                      QuestionHistoryArchiveSectionHeader(
                         totalCount: totalCount,
                         filteredCount: filteredQuestions.length,
                         hasKeyword: hasKeyword,
+                        selectedSortMode: _sortMode,
+                        isSortAscending: _isSortAscending,
+                        onSortChanged: _handleSortChanged,
+                        onSortDirectionToggle: _toggleSortDirection,
                       ),
                       const SizedBox(height: 12),
                       if (filteredQuestions.isEmpty)
@@ -341,6 +434,8 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                         _ArchiveQuestionList(
                           entries: filteredQuestions,
                           onQuestionTap: _openQuestionActions,
+                          isFavorite: _isFavorite,
+                          onFavoriteToggle: _toggleFavorite,
                         ),
                     ],
                   ),
@@ -355,12 +450,10 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 240),
                   child: OceanPillButton(
-                    label: '질문하러 돌아가기',
+                    label: '채팅으로 돌아가기',
                     icon: Icons.chat_bubble_rounded,
                     backgroundColor: AppTheme.deepNavy,
                     foregroundColor: Colors.white,
-                    useGradient: false,
-                    showShadow: false,
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                 ),
@@ -428,10 +521,14 @@ class _ArchiveQuestionList extends StatelessWidget {
   const _ArchiveQuestionList({
     required this.entries,
     required this.onQuestionTap,
+    required this.isFavorite,
+    required this.onFavoriteToggle,
   });
 
   final List<_QuestionArchiveEntry> entries;
   final ValueChanged<QuestionHistoryEntry> onQuestionTap;
+  final bool Function(QuestionHistoryEntry entry) isFavorite;
+  final ValueChanged<QuestionHistoryEntry> onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -444,6 +541,10 @@ class _ArchiveQuestionList extends StatelessWidget {
             index: entries[index].number,
             backgroundColor: Colors.white.withValues(alpha: 0.92),
             borderColor: AppTheme.skyBlue.withValues(alpha: 0.14),
+            trailing: QuestionHistoryFavoriteStarButton(
+              isFavorite: isFavorite(entries[index].entry),
+              onPressed: () => onFavoriteToggle(entries[index].entry),
+            ),
             onTap: () => onQuestionTap(entries[index].entry),
           ),
           if (index != entries.length - 1) const SizedBox(height: 10),
@@ -504,9 +605,8 @@ class _ArchiveLoadStatus extends StatelessWidget {
 }
 
 class _ArchiveTopBar extends StatelessWidget {
-  const _ArchiveTopBar({required this.totalCount, required this.onBack});
+  const _ArchiveTopBar({required this.onBack});
 
-  final int totalCount;
   final VoidCallback onBack;
 
   @override
@@ -547,216 +647,6 @@ class _ArchiveTopBar extends StatelessWidget {
                 ).textTheme.titleLarge?.copyWith(fontSize: 20),
               ),
             ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.76),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.22)),
-          ),
-          child: Text(
-            '총 $totalCount개',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ArchiveSummaryCard extends StatelessWidget {
-  const _ArchiveSummaryCard({
-    required this.totalCount,
-    required this.filteredCount,
-    required this.hasKeyword,
-  });
-
-  final int totalCount;
-  final int filteredCount;
-  final bool hasKeyword;
-
-  @override
-  Widget build(BuildContext context) {
-    return OceanPanel(
-      padding: const EdgeInsets.all(20),
-      color: Colors.white.withValues(alpha: 0.8),
-      borderColor: AppTheme.skyBlue.withValues(alpha: 0.24),
-      radius: 32,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '질문 아카이브',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hasKeyword ? '찾고 싶은 질문만 바로 보세요' : '다시 꺼내볼 질문을 모아뒀어요',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontSize: 28, height: 1.15),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      hasKeyword
-                          ? '검색 결과와 전체 기록 수를 같이 보여줘서 지금 얼마나 좁혀졌는지 바로 알 수 있습니다.'
-                          : '질문 흐름을 한 번에 훑고, 필요한 문장만 빠르게 다시 찾을 수 있게 정리했습니다.',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(height: 1.55),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              _ArchiveAccentPill(
-                label: hasKeyword ? '검색 결과' : '전체 질문',
-                value: '$filteredCount개',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _ArchiveMetricTile(
-                  label: '전체 기록',
-                  value: '$totalCount개',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ArchiveMetricTile(
-                  label: '현재 결과',
-                  value: '$filteredCount개',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ArchiveAccentPill extends StatelessWidget {
-  const _ArchiveAccentPill({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceRaised.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.24)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontSize: 22, height: 1.1),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ArchiveMetricTile extends StatelessWidget {
-  const _ArchiveMetricTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceRaised.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontSize: 20),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ArchiveSectionHeader extends StatelessWidget {
-  const _ArchiveSectionHeader({
-    required this.totalCount,
-    required this.filteredCount,
-    required this.hasKeyword,
-  });
-
-  final int totalCount;
-  final int filteredCount;
-  final bool hasKeyword;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          hasKeyword ? '검색 결과' : '전체 질문 목록',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          hasKeyword
-              ? '총 $totalCount개 중 $filteredCount개가 일치합니다.'
-              : '$totalCount개의 질문을 순서대로 다시 볼 수 있어요.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.textSecondary,
-            fontWeight: FontWeight.w700,
           ),
         ),
       ],

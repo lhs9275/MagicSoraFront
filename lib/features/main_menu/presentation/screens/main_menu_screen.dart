@@ -108,9 +108,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     alignment: Alignment.bottomCenter,
                     child: Padding(
                       padding: EdgeInsets.only(bottom: loginBottomPadding),
-                      child: _KakaoLoginButton(
-                        isLoading: _isKakaoSubmitting,
-                        onPressed: _submitKakaoLogin,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 300),
+                        child: _KakaoLoginButton(
+                          isLoading: _isKakaoSubmitting,
+                          onPressed: _submitKakaoLogin,
+                        ),
                       ),
                     ),
                   ),

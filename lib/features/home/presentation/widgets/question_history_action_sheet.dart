@@ -146,7 +146,7 @@ class _QuestionHistoryActionSheet extends StatelessWidget {
               OceanPillButton(
                 label: '이어서 질문하기',
                 icon: Icons.forum_rounded,
-                backgroundColor: AppTheme.shellPink,
+                backgroundColor: const Color(0xFFE2D3FF),
                 onPressed: onContinueQuestion,
               ),
               if (onDelete != null) ...[

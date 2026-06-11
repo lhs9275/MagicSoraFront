@@ -169,7 +169,10 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   void _openAccount() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => AccountProfileScreen(user: _currentUser),
+        builder: (_) => AccountProfileScreen(
+          user: _currentUser,
+          onOpenQuestionHistory: _openQuestionHistory,
+        ),
       ),
     );
   }

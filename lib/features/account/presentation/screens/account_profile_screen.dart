@@ -24,10 +24,15 @@ const _accountSheetBarrier = Color(0x332B4B80);
 
 /// 로그인한 사용자의 계정 정보와 프로필 설정 진입점을 보여주는 화면이다.
 class AccountProfileScreen extends StatelessWidget {
-  const AccountProfileScreen({super.key, AppUser? user})
+  const AccountProfileScreen({
+    super.key,
+    AppUser? user,
+    this.onOpenQuestionHistory,
+  })
     : user = user ?? AppUser.fallback;
 
   final AppUser user;
+  final VoidCallback? onOpenQuestionHistory;
 
   void _showComingSoon(BuildContext context, String label) {
     ScaffoldMessenger.of(
@@ -102,6 +107,7 @@ class AccountProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       _ProfileMenuSection(
+                        onOpenQuestionHistory: onOpenQuestionHistory,
                         onMenuTap: (label) => _showComingSoon(context, label),
                       ),
                       const SizedBox(height: 16),
@@ -558,9 +564,13 @@ class _SessionStatusStrip extends StatelessWidget {
 }
 
 class _ProfileMenuSection extends StatelessWidget {
-  const _ProfileMenuSection({required this.onMenuTap});
+  const _ProfileMenuSection({
+    required this.onMenuTap,
+    this.onOpenQuestionHistory,
+  });
 
   final ValueChanged<String> onMenuTap;
+  final VoidCallback? onOpenQuestionHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -589,7 +599,7 @@ class _ProfileMenuSection extends StatelessWidget {
             icon: Icons.history_rounded,
             title: '질문기록',
             subtitle: '남긴 질문 다시 보기',
-            onTap: () => onMenuTap('질문기록'),
+            onTap: onOpenQuestionHistory ?? () => onMenuTap('질문기록'),
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
