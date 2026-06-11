@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/navigation/app_page_routes.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/brand_wordmark.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -60,8 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => MagicConchHomeScreen(
+      fadeSlideRoute<void>(
+        MagicConchHomeScreen(
           user:
               result.user ?? AppUser.demo(email: _emailController.text.trim()),
         ),
@@ -71,9 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _openPreview() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => MagicConchHomeScreen(user: AppUser.demo()),
-      ),
+      fadeSlideRoute<void>(MagicConchHomeScreen(user: AppUser.demo())),
     );
   }
 
@@ -200,6 +200,8 @@ class _LoginHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              _LoginWordmark(isTight: isTight),
+              const SizedBox(height: 10),
               Image.asset(
                 'assets/images/brand/magic_conch.png',
                 width: conchSize,
@@ -225,5 +227,16 @@ class _LoginHeader extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _LoginWordmark extends StatelessWidget {
+  const _LoginWordmark({required this.isTight});
+
+  final bool isTight;
+
+  @override
+  Widget build(BuildContext context) {
+    return BrandWordmark(fontSize: isTight ? 27 : 32);
   }
 }

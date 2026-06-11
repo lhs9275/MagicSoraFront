@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
+import 'package:magicsorafront/features/home/models/question_history_entry.dart';
 import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.dart';
 
 class DesktopHomeLayout extends StatelessWidget {
@@ -9,16 +10,20 @@ class DesktopHomeLayout extends StatelessWidget {
     required this.questionController,
     required this.onSubmitQuestion,
     required this.onOpenAccount,
+    required this.onOpenQuestionHistory,
+    required this.onOpenQuestionFromHistory,
     super.key,
   });
 
   static const designSize = Size(1180, 760);
 
-  final List<String> questions;
+  final List<QuestionHistoryEntry> questions;
   final AppUser user;
   final TextEditingController questionController;
   final VoidCallback onSubmitQuestion;
   final VoidCallback onOpenAccount;
+  final VoidCallback onOpenQuestionHistory;
+  final ValueChanged<QuestionHistoryEntry> onOpenQuestionFromHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +52,8 @@ class DesktopHomeLayout extends StatelessWidget {
                                 Expanded(
                                   child: QuestionHistoryPanel(
                                     questions: questions,
+                                    onViewAll: onOpenQuestionHistory,
+                                    onQuestionTap: onOpenQuestionFromHistory,
                                   ),
                                 ),
                                 const SizedBox(height: 16),

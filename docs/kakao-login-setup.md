@@ -4,19 +4,20 @@
 
 - Kakao Developers > App > Platform keys > Native app key
 - Optional for web later: JavaScript key
+- BFF login base URL for token exchange: `BFF_BASE_URL`
 
 ## Android setup
 
-The shared Native app key is committed in `android/gradle.properties`:
+Set the Native app key locally in `android/local.properties`:
 
 ```properties
 kakao.native_app_key=YOUR_NATIVE_APP_KEY
 ```
 
-Android builds read this value from `android/gradle.properties`, with optional
-overrides from `android/local.properties` or the `KAKAO_NATIVE_APP_KEY`
-environment variable. It injects both the manifest redirect scheme and the
-Flutter SDK runtime key:
+Android builds read this value from `android/local.properties`, with optional
+fallbacks from the `kakao.native_app_key` Gradle property or the
+`KAKAO_NATIVE_APP_KEY` environment variable. It injects both the manifest
+redirect scheme and the Flutter SDK runtime key:
 
 ```text
 kakaoYOUR_NATIVE_APP_KEY://oauth
@@ -68,7 +69,13 @@ Current iOS Bundle ID for Kakao Developers:
 com.example.magicsorafront
 ```
 
-Copy the example file:
+Debug and release builds use a placeholder scheme by default:
+
+```xcconfig
+KAKAO_NATIVE_APP_KEY_SCHEME=kakaoYOUR_NATIVE_APP_KEY
+```
+
+To override it locally, copy the example file:
 
 ```sh
 cp ios/Flutter/KakaoKeys.xcconfig.example ios/Flutter/KakaoKeys.xcconfig
@@ -88,3 +95,48 @@ KAKAO_NATIVE_APP_KEY_SCHEME=kakaoYOUR_NATIVE_APP_KEY
 - Register Android package name: `com.example.magicsorafront` unless the app id changes.
 - Register debug/release key hashes.
 - Register iOS Bundle ID: `com.example.magicsorafront` unless the bundle id changes.
+
+## BFF token exchange
+
+After Kakao SDK login succeeds, the app posts the Kakao access token to BFF
+and expects the service token in return.
+
+Run the app with the BFF URL:
+
+```sh
+flutter run --dart-define=BFF_BASE_URL=https://bff.noctide.dev
+```
+
+Optional login endpoint override:
+
+```sh
+flutter run \
+  --dart-define=BFF_BASE_URL=https://bff.noctide.dev \
+  --dart-define=BFF_KAKAO_LOGIN_PATH=/mapi/auth/kakao
+```
+
+Default request from the Flutter app:
+
+```http
+POST /mapi/auth/kakao
+Content-Type: application/json
+
+{
+  "kakaoAccessToken": "kakao-access-token"
+}
+```
+
+Expected BFF response shape:
+
+```json
+{
+  "token_type": "Bearer",
+  "access_token": "bff-access-token",
+  "access_token_expires_in": 900,
+  "refresh_token": "optional-refresh-token",
+  "refresh_token_expires_in": 1209600
+}
+```
+
+The BFF login endpoint itself must be open to unauthenticated requests,
+otherwise the client will receive `401` before token exchange completes.

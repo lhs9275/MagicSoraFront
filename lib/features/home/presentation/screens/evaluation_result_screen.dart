@@ -112,9 +112,7 @@ class EvaluationResultScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.primaryDark,
                     fontWeight: FontWeight.w900,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppTheme.primaryDark,
-                    decorationThickness: 1.5,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ),

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "screens/question-history-archive.html",
+  "entry": "screens/question-history-archive.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-06-07T15:10:07.643Z",
+  "updatedAt": "2026-06-07T15:10:07.643Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

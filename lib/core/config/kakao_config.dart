@@ -12,7 +12,7 @@ class KakaoConfig {
   );
 
   static String _nativeAppKey = _nativeAppKeyFromEnvironment;
-  static String _javaScriptAppKey = _javaScriptAppKeyFromEnvironment;
+  static final String _javaScriptAppKey = _javaScriptAppKeyFromEnvironment;
 
   static String get nativeAppKey => _nativeAppKey;
   static String get javaScriptAppKey => _javaScriptAppKey;

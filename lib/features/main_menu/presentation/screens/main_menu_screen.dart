@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/navigation/app_page_routes.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/brand_wordmark.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/kakao_auth_controller.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -45,9 +47,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            MagicConchHomeScreen(user: result.user ?? AppUser.fallback),
+      fadeSlideRoute<void>(
+        MagicConchHomeScreen(user: result.user ?? AppUser.fallback),
       ),
     );
   }
@@ -61,6 +62,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 20.0;
             final topPadding = constraints.maxHeight < 640 ? 112.0 : 172.0;
             final bottomPadding = constraints.maxHeight < 640 ? 72.0 : 98.0;
+            final loginBottomPadding = bottomPadding + 14;
+            final brandAlignment = constraints.maxHeight < 640
+                ? const Alignment(0, -0.3)
+                : const Alignment(0, -0.42);
             const loginAreaHeight = 56.0;
             final minHeight =
                 constraints.maxHeight -
@@ -90,7 +95,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           minHeight: minHeight > 0 ? minHeight : 0,
                         ),
                         child: Align(
-                          alignment: Alignment.center,
+                          alignment: brandAlignment,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 480),
                             child: const _BrandBlock(),
@@ -102,10 +107,13 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: EdgeInsets.only(bottom: bottomPadding),
-                      child: _KakaoLoginButton(
-                        isLoading: _isKakaoSubmitting,
-                        onPressed: _submitKakaoLogin,
+                      padding: EdgeInsets.only(bottom: loginBottomPadding),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 300),
+                        child: _KakaoLoginButton(
+                          isLoading: _isKakaoSubmitting,
+                          onPressed: _submitKakaoLogin,
+                        ),
                       ),
                     ),
                   ),
@@ -124,49 +132,91 @@ class _BrandBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isTight = constraints.maxWidth < 340;
-        final targetConchWidth = isTight ? 252.0 : 296.0;
-        final availableWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : targetConchWidth;
-        final conchWidth = availableWidth < targetConchWidth
-            ? availableWidth
-            : targetConchWidth;
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/brand/magic_conch.png',
-              width: conchWidth,
-              height: conchWidth * 0.72,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '질문하고, 토론하고, 기록하는 마법의 소라고동',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 340),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, child) {
+        return Opacity(
+          opacity: progress,
+          child: Transform.scale(scale: 0.96 + progress * 0.04, child: child),
         );
       },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTight = constraints.maxWidth < 340;
+          final targetConchWidth = isTight ? 276.0 : 332.0;
+          final availableWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : targetConchWidth;
+          final conchWidth = availableWidth < targetConchWidth
+              ? availableWidth
+              : targetConchWidth;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Transform.translate(
+                offset: Offset(0, isTight ? -38 : -52),
+                child: BrandWordmark(fontSize: isTight ? 42 : 54),
+              ),
+              const SizedBox(height: 28),
+              Image.asset(
+                'assets/images/brand/magic_conch.png',
+                width: conchWidth,
+                height: conchWidth * 0.72,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '질문하고, 토론하고, 기록하는 마법의 소라고동',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
 
-class _KakaoLoginButton extends StatelessWidget {
+class _KakaoLoginButton extends StatefulWidget {
   const _KakaoLoginButton({required this.isLoading, required this.onPressed});
 
   static const _assetPath = 'assets/images/auth/kakao_login_medium_wide.png';
 
   final bool isLoading;
   final VoidCallback onPressed;
+
+  @override
+  State<_KakaoLoginButton> createState() => _KakaoLoginButtonState();
+}
+
+class _KakaoLoginButtonState extends State<_KakaoLoginButton> {
+  bool _isPressed = false;
+
+  void _setPressed(bool value) {
+    if (_isPressed == value || widget.isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isPressed = value;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _KakaoLoginButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isLoading && _isPressed) {
+      _isPressed = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +227,10 @@ class _KakaoLoginButton extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: isLoading ? null : onPressed,
+          onTapDown: (_) => _setPressed(true),
+          onTapCancel: () => _setPressed(false),
+          onTapUp: (_) => _setPressed(false),
+          onTap: widget.isLoading ? null : widget.onPressed,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth < 300
@@ -186,15 +239,20 @@ class _KakaoLoginButton extends StatelessWidget {
 
               return AnimatedOpacity(
                 duration: const Duration(milliseconds: 160),
-                opacity: isLoading ? 0.62 : 1,
-                child: SizedBox(
-                  width: width,
-                  height: 45,
-                  child: Image.asset(
-                    _assetPath,
+                opacity: widget.isLoading ? 0.62 : 1,
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOutCubic,
+                  scale: _isPressed ? 0.98 : 1,
+                  child: SizedBox(
                     width: width,
                     height: 45,
-                    fit: BoxFit.contain,
+                    child: Image.asset(
+                      _KakaoLoginButton._assetPath,
+                      width: width,
+                      height: 45,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               );
