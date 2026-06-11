@@ -356,7 +356,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                   constraints: const BoxConstraints(maxWidth: 240),
                   child: OceanPillButton(
                     label: '질문하러 돌아가기',
-                    icon: IIcons.chat_bubble_rounded,
+                    icon: Icons.chat_bubble_rounded,
                     backgroundColor: AppTheme.deepNavy,
                     foregroundColor: Colors.white,
                     useGradient: false,
