@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>질문 아카이브</title>
+  <style>
+    :root {
+      --bg: oklch(98% 0.01 205);
+      --surface: rgba(255, 255, 255, 0.8);
+      --surface-strong: rgba(255, 255, 255, 0.96);
+      --surface-soft: rgba(241, 252, 251, 0.92);
+      --fg: oklch(24% 0.04 214);
+      --muted: oklch(51% 0.03 214);
+      --line: rgba(95, 166, 172, 0.16);
+      --line-strong: rgba(73, 154, 165, 0.28);
+      --accent: oklch(63% 0.12 205);
+      --accent-strong: oklch(56% 0.12 205);
+      --sand: oklch(97% 0.03 98);
+      --shadow: 0 22px 50px rgba(38, 107, 115, 0.13);
+      --font-display: "Pretendard Variable", "SUIT Variable", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      --font-body: "Pretendard Variable", "SUIT Variable", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(155, 239, 224, 0.9), transparent 25%),
+        radial-gradient(circle at 86% 84%, rgba(253, 236, 165, 0.72), transparent 18%),
+        linear-gradient(180deg, #dbfff7 0%, #f6fffd 48%, #fffaf0 100%);
+      color: var(--fg);
+      font-family: var(--font-body);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 44%),
+        radial-gradient(circle at bottom, rgba(123, 215, 223, 0.12), transparent 28%);
+      opacity: 0.9;
+    }
+
+    .page {
+      position: relative;
+      min-height: 100dvh;
+      padding: 28px 18px 138px;
+    }
+
+    .shell {
+      position: absolute;
+      width: 164px;
+      right: 6px;
+      top: 52px;
+      opacity: 0.1;
+      filter: saturate(1.2) blur(0.2px);
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      max-width: 430px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .topbar button,
+    .row button,
+    .footer-action,
+    .chip {
+      font: inherit;
+    }
+
+    .icon-button {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--fg);
+      box-shadow: 0 12px 24px rgba(35, 113, 117, 0.08);
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: transform 180ms ease, background-color 180ms ease;
+    }
+
+    .icon-button:hover,
+    .icon-button:focus-visible {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.9);
+      outline: none;
+    }
+
+    .header-copy small,
+    .section-head small,
+    .empty small,
+    .preview-card small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .header-copy h1 {
+      margin: 6px 0 0;
+      font-size: clamp(1.9rem, 5vw, 2.6rem);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+      text-wrap: balance;
+    }
+
+    .header-copy p {
+      margin: 8px 0 0;
+      max-width: 30ch;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      border-radius: 28px;
+      background: var(--surface);
+      border: 1px solid rgba(103, 176, 183, 0.14);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .summary {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .summary::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -35% 35%;
+      height: 180px;
+      background: radial-gradient(circle, rgba(124, 223, 217, 0.36), transparent 62%);
+      pointer-events: none;
+    }
+
+    .summary-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .summary-main strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 2.8rem;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+
+    .summary-main span {
+      color: var(--muted);
+      font-size: 0.96rem;
+      font-weight: 600;
+    }
+
+    .summary-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(245, 255, 253, 0.92);
+      border: 1px solid rgba(105, 184, 189, 0.18);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-strong);
+      white-space: nowrap;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .summary-tile {
+      padding: 14px;
+      border-radius: 20px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(98, 173, 178, 0.12);
+    }
+
+    .summary-tile strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .summary-tile span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .search-panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 0 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(94, 173, 181, 0.14);
+    }
+
+    .search svg {
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+
+    .search input {
+      flex: 1 1 auto;
+      border: 0;
+      background: transparent;
+      color: var(--fg);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .search input::placeholder {
+      color: rgba(81, 121, 127, 0.74);
+    }
+
+    .clear-button {
+      border: 0;
+      background: rgba(240, 249, 248, 0.98);
+      color: var(--muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .chips {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(98, 169, 177, 0.14);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      cursor: pointer;
+      transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
+
+    .chip.is-active,
+    .chip:hover,
+    .chip:focus-visible {
+      transform: translateY(-1px);
+      background: rgba(224, 250, 246, 0.96);
+      border-color: rgba(55, 163, 171, 0.24);
+      color: var(--accent-strong);
+      outline: none;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 6px 0;
+    }
+
+    .section-head h2 {
+      margin: 6px 0 0;
+      font-size: 1.25rem;
+      letter-spacing: -0.03em;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      padding: 16px;
+      border: 0;
+      border-radius: 24px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(87, 164, 173, 0.12);
+      box-shadow: 0 10px 18px rgba(61, 124, 131, 0.06);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .row:hover,
+    .row:focus-visible,
+    .row.is-active {
+      transform: translateY(-1px);
+      border-color: rgba(66, 167, 176, 0.26);
+      box-shadow: 0 16px 26px rgba(57, 133, 141, 0.11);
+      outline: none;
+    }
+
+    .row-index {
+      display: grid;
+      place-items: center;
+      flex: 0 0 42px;
+      height: 42px;
+      border-radius: 16px;
+      background: rgba(231, 248, 245, 0.95);
+      color: var(--accent-strong);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .row-copy {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(234, 247, 255, 0.92);
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .meta-text {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .row-copy strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.5;
+      letter-spacing: -0.02em;
+      text-wrap: pretty;
+    }
+
+    .preview-card {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(240, 255, 252, 0.92), rgba(255, 255, 255, 0.92));
+    }
+
+    .preview-card strong {
+      display: block;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      letter-spacing: -0.03em;
+    }
+
+    .preview-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.92rem;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .preview-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(80, 164, 173, 0.14);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--fg);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .preview-button.primary {
+      background: linear-gradient(135deg, rgba(140, 233, 223, 0.96), rgba(111, 198, 214, 0.96));
+      color: oklch(23% 0.03 214);
+      border-color: transparent;
+    }
+
+    .empty {
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    .empty strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.12rem;
+      letter-spacing: -0.03em;
+    }
+
+    .empty p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    .footer-action {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 54px;
+      min-width: min(390px, calc(100vw - 32px));
+      padding: 0 18px;
+      border: 1px solid rgba(80, 164, 173, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      color: var(--fg);
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 16px 32px rgba(48, 123, 130, 0.12);
+    }
+
+    .footer-action span:last-child {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    @media (min-width: 900px) {
+      .page {
+        display: grid;
+        place-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <img class="shell" src="../assets/images/brand/magic_conch.png" alt="" />
+    <main class="app">
+      <header class="topbar">
+        <button class="icon-button" type="button" aria-label="뒤로가기">←</button>
+        <button class="icon-button" type="button" aria-label="정렬">≡</button>
+      </header>
+
+      <section class="header-copy">
+        <small>QUESTION ARCHIVE</small>
+        <h1>지난 질문을 다시 꺼내보기</h1>
+        <p>예전 질문을 한 번에 찾고, 다시 열어 현재 대화로 이어지는 흐름을 먼저 살린 시안입니다.</p>
+      </section>
+
+      <section class="card summary" aria-label="질문 요약">
+        <div class="summary-main">
+          <div>
+            <span>지금 보관된 질문</span>
+            <strong id="total-count">25</strong>
+          </div>
+          <div class="summary-badge" id="active-summary">전체 질문</div>
+        </div>
+        <div class="summary-grid" id="summary-grid"></div>
+      </section>
+
+      <section class="card search-panel" aria-label="검색과 필터">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Zm9 3-5.2-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <input id="search-input" type="search" placeholder="질문이나 초성으로 검색" autocomplete="off" />
+          <button class="clear-button" id="clear-button" type="button" aria-label="검색어 지우기">×</button>
+        </label>
+        <div class="chips" id="chip-list" role="tablist" aria-label="카테고리 필터"></div>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <small>RESULTS</small>
+          <h2>빠르게 다시 찾기</h2>
+        </div>
+        <p id="result-count">25개</p>
+      </section>
+
+      <section class="list" id="list" aria-live="polite"></section>
+
+      <section class="card preview-card" id="preview-card">
+        <div>
+          <small>SELECTED QUESTION</small>
+          <strong id="preview-title">오늘 질문 기록을 한눈에 정리해줘.</strong>
+        </div>
+        <p id="preview-copy">선택한 질문을 현재 대화 입력창으로 바로 되돌리는 흐름을 상정했습니다. 지금은 화면 시안이라 버튼만 보여줍니다.</p>
+        <div class="preview-actions">
+          <button class="preview-button primary" type="button">이 질문 다시 열기</button>
+          <button class="preview-button" type="button">복사해서 새 질문 만들기</button>
+        </div>
+      </section>
+
+      <section class="card empty" id="empty-state" aria-live="polite">
+        <small>NO MATCH</small>
+        <strong>검색 결과가 없습니다.</strong>
+        <p>다른 단어로 찾거나 카테고리를 전체로 돌려보세요.</p>
+      </section>
+    </main>
+
+    <a class="footer-action" href="../index.html">
+      <span>채팅으로 돌아가기</span>
+      <span>시안 선택 화면</span>
+    </a>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      "나는 사람이다",
+      "오늘 토론 주제는 무엇이 좋을까?",
+      "AI 의견을 어떻게 비교하면 좋을까?",
+      "반박 근거를 더 탄탄하게 만들려면?",
+      "최종 결론을 한 문장으로 정리해줘.",
+      "환경 보호 토론에서 핵심 근거는 뭐야?",
+      "찬성 입장에서 설득력 있는 예시를 알려줘.",
+      "반대 입장에서 가장 강한 논리는 뭐야?",
+      "토론 시작 발언을 자연스럽게 만들어줘.",
+      "상대방 질문에 짧게 답하는 방법은?",
+      "논리적으로 보이게 말 순서를 정리해줘.",
+      "근거가 부족한 문장을 고쳐줘.",
+      "청중이 이해하기 쉬운 비유를 추천해줘.",
+      "마지막 마무리 멘트를 만들어줘.",
+      "내 주장에 어울리는 키워드를 뽑아줘.",
+      "학교 급식 개선 토론 주제를 정리해줘.",
+      "스마트폰 사용 제한 찬반 근거를 알려줘.",
+      "동물 실험 반대 입장 근거를 만들어줘.",
+      "발표할 때 긴장하지 않는 방법은?",
+      "토론에서 질문을 날카롭게 만드는 법은?",
+      "내 의견을 더 짧고 강하게 고쳐줘.",
+      "자료 조사할 때 어떤 순서로 찾아야 해?",
+      "상대방 주장에 예의 있게 반박하는 문장을 써줘.",
+      "토론 카드에 넣을 핵심 문장을 추천해줘.",
+      "오늘 질문 기록을 한눈에 정리해줘."
+    ];
+
+    const CATEGORY_RULES = [
+      { label: "토론 준비", test: (q) => /토론|찬성|반대|주제/.test(q) },
+      { label: "논리 강화", test: (q) => /근거|반박|논리|주장/.test(q) },
+      { label: "표현 다듬기", test: (q) => /문장|정리|키워드|마무리|발언|비유/.test(q) },
+      { label: "실전 발표", test: (q) => /발표|설득|청중|긴장/.test(q) },
+      { label: "리서치", test: (q) => /자료|조사|예시/.test(q) }
+    ];
+
+    const initials = [
+      "ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ",
+      "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"
+    ];
+
+    const items = QUESTIONS.map((question, index) => {
+      const category = CATEGORY_RULES.find((rule) => rule.test(question))?.label || "일반 질문";
+      return {
+        id: index + 1,
+        question,
+        category
+      };
+    });
+
+    const searchInput = document.getElementById("search-input");
+    const clearButton = document.getElementById("clear-button");
+    const chipList = document.getElementById("chip-list");
+    const list = document.getElementById("list");
+    const resultCount = document.getElementById("result-count");
+    const totalCount = document.getElementById("total-count");
+    const summaryGrid = document.getElementById("summary-grid");
+    const previewTitle = document.getElementById("preview-title");
+    const previewCopy = document.getElementById("preview-copy");
+    const activeSummary = document.getElementById("active-summary");
+    const emptyState = document.getElementById("empty-state");
+
+    let activeCategory = "전체";
+    let selectedId = items[items.length - 1].id;
+
+    function compactSearchText(value) {
+      return value.replace(/\s+/g, "");
+    }
+
+    function toHangulInitials(value) {
+      return Array.from(value).map((char) => {
+        const code = char.charCodeAt(0);
+        if (code >= 0xac00 && code <= 0xd7a3) {
+          return initials[Math.floor((code - 0xac00) / 588)];
+        }
+        return char;
+      }).join("");
+    }
+
+    function toHangulWordInitials(value) {
+      return value
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => toHangulInitials(word[0]))
+        .join("");
+    }
+
+    function matchesKeyword(question, keyword) {
+      if (!keyword) {
+        return true;
+      }
+      const rawQuestion = question.toLowerCase();
+      const compactQuestion = compactSearchText(rawQuestion);
+      const compactKeyword = compactSearchText(keyword.toLowerCase());
+      const questionInitials = toHangulInitials(compactQuestion);
+      const keywordInitials = toHangulInitials(compactKeyword);
+      const wordInitials = toHangulWordInitials(rawQuestion);
+      return compactQuestion.includes(compactKeyword)
+        || questionInitials.includes(compactKeyword)
+        || questionInitials.includes(keywordInitials)
+        || wordInitials.includes(compactKeyword)
+        || wordInitials.includes(keywordInitials);
+    }
+
+    function filteredItems() {
+      const keyword = searchInput.value.trim();
+      return items.filter((item) => {
+        const categoryMatch = activeCategory === "전체" || item.category === activeCategory;
+        const keywordMatch = matchesKeyword(item.question, keyword);
+        return categoryMatch && keywordMatch;
+      });
+    }
+
+    function renderSummary() {
+      const counts = items.reduce((map, item) => {
+        map[item.category] = (map[item.category] || 0) + 1;
+        return map;
+      }, {});
+
+      totalCount.textContent = items.length;
+      const sorted = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+
+      summaryGrid.innerHTML = sorted.map(([label, count]) => `
+        <div class="summary-tile">
+          <strong>${label}</strong>
+          <span>${count}개의 질문이 여기에 모여 있습니다.</span>
+        </div>
+      `).join("");
+    }
+
+    function renderChips() {
+      const counts = items.reduce((map, item) => {
+        map[item.category] = (map[item.category] || 0) + 1;
+        return map;
+      }, {});
+      const categories = ["전체", ...Object.keys(counts)];
+
+      chipList.innerHTML = categories.map((label) => {
+        const isActive = label === activeCategory;
+        const count = label === "전체" ? items.length : counts[label];
+        return `
+          <button class="chip${isActive ? " is-active" : ""}" type="button" data-category="${label}">
+            ${label} · ${count}
+          </button>
+        `;
+      }).join("");
+
+      chipList.querySelectorAll(".chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          activeCategory = chip.dataset.category;
+          render();
+        });
+      });
+    }
+
+    function updatePreview(selectedItem) {
+      if (!selectedItem) {
+        return;
+      }
+      previewTitle.textContent = selectedItem.question;
+      previewCopy.textContent = `${selectedItem.category} 흐름에서 다시 이어붙이기 좋은 질문입니다. 실제 앱 적용 시에는 탭하면 입력창으로 즉시 복원되는 패턴이 어울립니다.`;
+    }
+
+    function renderList() {
+      const visibleItems = filteredItems();
+      const keyword = searchInput.value.trim();
+      resultCount.textContent = `${visibleItems.length}개`;
+      activeSummary.textContent = activeCategory === "전체"
+        ? "전체 질문"
+        : `${activeCategory}만 보기`;
+
+      if (!visibleItems.length) {
+        list.innerHTML = "";
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      if (!visibleItems.find((item) => item.id === selectedId)) {
+        selectedId = visibleItems[0].id;
+      }
+
+      list.innerHTML = visibleItems.map((item, index) => {
+        const isActive = item.id === selectedId;
+        const rank = String(index + 1).padStart(2, "0");
+        const meta = keyword ? "검색 결과" : "최근 질문";
+        return `
+          <button class="row${isActive ? " is-active" : ""}" type="button" data-id="${item.id}">
+            <span class="row-index">${rank}</span>
+            <span class="row-copy">
+              <span class="row-meta">
+                <span class="tag">${item.category}</span>
+                <span class="meta-text">${meta}</span>
+              </span>
+              <strong>${item.question}</strong>
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      list.querySelectorAll(".row").forEach((row) => {
+        row.addEventListener("click", () => {
+          selectedId = Number(row.dataset.id);
+          const selectedItem = items.find((item) => item.id === selectedId);
+          updatePreview(selectedItem);
+          renderList();
+        });
+      });
+
+      updatePreview(items.find((item) => item.id === selectedId));
+    }
+
+    function render() {
+      renderChips();
+      renderList();
+    }
+
+    searchInput.addEventListener("input", renderList);
+    clearButton.addEventListener("click", () => {
+      searchInput.value = "";
+      searchInput.focus();
+      renderList();
+    });
+
+    renderSummary();
+    render();
+  </script>
+</body>
+</html>

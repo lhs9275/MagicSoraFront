@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "screens/question-history-journal.html",
+  "entry": "screens/question-history-journal.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-06-07T15:10:08.065Z",
+  "updatedAt": "2026-06-07T15:10:08.065Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

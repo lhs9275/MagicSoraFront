@@ -1,0 +1,2 @@
+// Copy this file to ios/Flutter/KakaoKeys.xcconfig and replace the value.
+KAKAO_NATIVE_APP_KEY_SCHEME=kakaoYOUR_NATIVE_APP_KEY
