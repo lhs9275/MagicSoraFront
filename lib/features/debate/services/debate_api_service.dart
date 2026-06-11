@@ -6,15 +6,23 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:magicsorafront/core/config/bff_config.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
+import 'package:magicsorafront/features/auth/services/bff_auth_service.dart';
 import 'package:magicsorafront/features/debate/models/debate_models.dart';
 
 class DebateApiService {
   DebateApiService({
     http.Client? httpClient,
     AuthSessionStore? sessionStore,
+    BffAuthService? authService,
     List<Duration>? streamRetryDelays,
   }) : _httpClient = httpClient ?? http.Client(),
        _sessionStore = sessionStore ?? AuthSessionStore.instance,
+       _authService =
+           authService ??
+           BffAuthService(
+             httpClient: httpClient,
+             sessionStore: sessionStore ?? AuthSessionStore.instance,
+           ),
        _streamRetryDelays = List.unmodifiable(
          streamRetryDelays ??
              const [Duration(milliseconds: 300), Duration(seconds: 1)],
@@ -22,9 +30,30 @@ class DebateApiService {
 
   final http.Client _httpClient;
   final AuthSessionStore _sessionStore;
+  final BffAuthService _authService;
   final List<Duration> _streamRetryDelays;
 
-  Future<int> startDebate(String topic) async {
+  /// 가이드 1.2: 만료된 access token으로 401을 받으면 refresh를 1회 시도하고 재요청한다.
+  Future<T> _withTokenRefresh<T>(Future<T> Function() perform) async {
+    try {
+      return await perform();
+    } on DebateApiException catch (error) {
+      if (error.statusCode != 401) {
+        rethrow;
+      }
+      final refreshed = await _authService.refreshSession();
+      if (refreshed == null) {
+        rethrow;
+      }
+      return await perform();
+    }
+  }
+
+  Future<int> startDebate(String topic) {
+    return _withTokenRefresh(() => _startDebateOnce(topic));
+  }
+
+  Future<int> _startDebateOnce(String topic) async {
     final response = await _httpClient
         .post(
           BffConfig.apiUri('/api/debates'),
@@ -33,6 +62,14 @@ class DebateApiService {
         )
         .timeout(const Duration(seconds: 15));
     final body = _decodeJson(response.bodyBytes);
+
+    if (response.statusCode == 429) {
+      throw DebateApiException(
+        _firstNonEmptyString([body['message'], body['error']]) ??
+            '동시에 진행할 수 있는 토론 수를 초과했어요. 진행 중인 토론을 마친 뒤 다시 시도해주세요.',
+        statusCode: 429,
+      );
+    }
 
     _throwIfFailed(response.statusCode, body, '/api/debates');
 
@@ -45,11 +82,15 @@ class DebateApiService {
 
   Stream<DebateSseEvent> streamDebate(int debateId) async* {
     final path = '/api/debates/$debateId/stream';
-    final response = await _openDebateStream(path);
+    final response = await _withTokenRefresh(() => _openDebateStream(path));
     yield* _parseSse(response.stream);
   }
 
-  Future<DebateListPage> fetchDebates({int? cursor}) async {
+  Future<DebateListPage> fetchDebates({int? cursor}) {
+    return _withTokenRefresh(() => _fetchDebatesOnce(cursor: cursor));
+  }
+
+  Future<DebateListPage> _fetchDebatesOnce({int? cursor}) async {
     final response = await _httpClient
         .get(
           BffConfig.apiUri('/api/debates', queryParameters: {'cursor': cursor}),
@@ -62,7 +103,11 @@ class DebateApiService {
     return DebateListPage.fromJson(body);
   }
 
-  Future<DebateDetail> fetchDebate(int debateId) async {
+  Future<DebateDetail> fetchDebate(int debateId) {
+    return _withTokenRefresh(() => _fetchDebateOnce(debateId));
+  }
+
+  Future<DebateDetail> _fetchDebateOnce(int debateId) async {
     final path = '/api/debates/$debateId';
     final response = await _httpClient
         .get(
@@ -76,7 +121,11 @@ class DebateApiService {
     return DebateDetail.fromJson(body);
   }
 
-  Future<DebateCancelResult> cancelDebate(int debateId) async {
+  Future<DebateCancelResult> cancelDebate(int debateId) {
+    return _withTokenRefresh(() => _cancelDebateOnce(debateId));
+  }
+
+  Future<DebateCancelResult> _cancelDebateOnce(int debateId) async {
     final path = '/api/debates/$debateId/cancel';
     final response = await _httpClient
         .post(BffConfig.apiUri(path), headers: await _jsonHeaders())
@@ -87,7 +136,11 @@ class DebateApiService {
     return DebateCancelResult.fromJson(body);
   }
 
-  Future<void> deleteDebate(int debateId) async {
+  Future<void> deleteDebate(int debateId) {
+    return _withTokenRefresh(() => _deleteDebateOnce(debateId));
+  }
+
+  Future<void> _deleteDebateOnce(int debateId) async {
     final path = '/api/debates/$debateId';
     final response = await _httpClient
         .delete(BffConfig.apiUri(path), headers: await _jsonHeaders())
@@ -98,6 +151,109 @@ class DebateApiService {
     }
 
     _throwIfFailed(response.statusCode, _decodeJson(response.bodyBytes), path);
+  }
+
+  Stream<DebateSseEvent> askQuestion(int debateId, String question) async* {
+    final response = await _withTokenRefresh(
+      () => _openQuestionStream(debateId, question),
+    );
+    yield* _parseSse(response.stream);
+  }
+
+  Future<http.StreamedResponse> _openQuestionStream(
+    int debateId,
+    String question,
+  ) async {
+    final path = '/api/debates/$debateId/questions';
+    final headers = await _streamHeaders();
+    headers['Content-Type'] = 'application/json';
+
+    final request = http.Request('POST', BffConfig.apiUri(path));
+    request.headers.addAll(headers);
+    request.body = jsonEncode({'question': question});
+
+    http.StreamedResponse response;
+    try {
+      response = await _httpClient
+          .send(request)
+          .timeout(const Duration(minutes: 2));
+    } on TimeoutException {
+      throw const DebateApiException('추가 질문 응답 시간이 초과되었습니다.');
+    } on http.ClientException catch (error) {
+      final detail = error.message.trim();
+      throw DebateApiException(
+        detail.isEmpty ? '추가 질문 요청에 실패했습니다.' : detail,
+      );
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final bodyText = await response.stream.bytesToString();
+      throw DebateApiException(
+        _messageFromBodyText(
+          bodyText,
+          fallback: _questionErrorMessage(response.statusCode),
+        ),
+        statusCode: response.statusCode,
+      );
+    }
+
+    return response;
+  }
+
+  Future<List<DebateQuestionAnswer>> fetchQuestions(int debateId) {
+    return _withTokenRefresh(() => _fetchQuestionsOnce(debateId));
+  }
+
+  Future<List<DebateQuestionAnswer>> _fetchQuestionsOnce(int debateId) async {
+    final path = '/api/debates/$debateId/questions';
+    final response = await _httpClient
+        .get(
+          BffConfig.apiUri(path),
+          headers: await _jsonHeaders(contentType: false),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _throwIfFailed(
+        response.statusCode,
+        _decodeJson(response.bodyBytes),
+        path,
+      );
+    }
+
+    final rawBody = utf8.decode(response.bodyBytes, allowMalformed: true).trim();
+    if (rawBody.isEmpty) {
+      return const [];
+    }
+
+    final decoded = jsonDecode(rawBody);
+    if (decoded is! List) {
+      return const [];
+    }
+
+    final results = <DebateQuestionAnswer>[];
+    for (final item in decoded) {
+      if (item is Map) {
+        results.add(
+          DebateQuestionAnswer.fromJson(
+            item.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        );
+      }
+    }
+    return results;
+  }
+
+  String _questionErrorMessage(int statusCode) {
+    return switch (statusCode) {
+      400 => '추가 질문은 1~500자 사이여야 합니다.',
+      401 => '로그인이 필요합니다.',
+      403 => '본인 토론에만 추가 질문할 수 있습니다.',
+      404 => '토론을 찾을 수 없습니다.',
+      409 => '토론이 완료된 뒤에 추가 질문할 수 있어요.',
+      429 => '잠시 후 다시 시도해주세요. (분당 5회 제한)',
+      _ => '추가 질문에 실패했습니다. status=$statusCode',
+    };
   }
 
   Stream<DebateSseEvent> _parseSse(Stream<List<int>> byteStream) async* {
@@ -134,7 +290,8 @@ class DebateApiService {
       }
 
       if (field == 'event') {
-        eventName = value;
+        // 가이드 3.3: endpoint별 공백 차이가 있어 event 이름은 trim해 비교한다.
+        eventName = value.trim();
       } else if (field == 'data') {
         dataLines.add(value);
       }

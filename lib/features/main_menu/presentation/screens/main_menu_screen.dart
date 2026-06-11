@@ -158,7 +158,7 @@ class _BrandBlock extends StatelessWidget {
             children: [
               Transform.translate(
                 offset: Offset(0, isTight ? -38 : -52),
-                child: BrandWordmark(fontSize: isTight ? 42 : 54),
+                child: BrandWordmark(fontSize: isTight ? 56 : 72),
               ),
               const SizedBox(height: 28),
               Image.asset(

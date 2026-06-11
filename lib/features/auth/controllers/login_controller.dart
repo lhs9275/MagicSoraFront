@@ -1,9 +1,19 @@
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
+import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
+import 'package:magicsorafront/features/auth/services/bff_auth_service.dart';
 
-/// 로그인 화면에서 사용하는 입력 검증과 임시 인증 흐름을 담당한다.
+/// 로그인 화면에서 사용하는 입력 검증과 인증 흐름을 담당한다.
 class LoginController {
-  /// 아이디 입력값이 비어 있는지 확인한다.
+  LoginController({
+    BffAuthService? bffAuthService,
+    AuthSessionStore? authSessionStore,
+  }) : _bffAuthService = bffAuthService ?? BffAuthService(),
+       _authSessionStore = authSessionStore ?? AuthSessionStore.instance;
+
+  final BffAuthService _bffAuthService;
+  final AuthSessionStore _authSessionStore;
+
   String? validateIdentifier(String? value) {
     final identifier = value?.trim() ?? '';
 
@@ -14,7 +24,6 @@ class LoginController {
     return null;
   }
 
-  /// 이메일 형식이 최소한 맞는지 확인한다.
   String? validateEmail(String? value) {
     final email = value?.trim() ?? '';
 
@@ -29,7 +38,6 @@ class LoginController {
     return null;
   }
 
-  /// 비밀번호 길이를 검사해 너무 짧은 입력을 막는다.
   String? validatePassword(String? value) {
     final password = value ?? '';
 
@@ -44,17 +52,58 @@ class LoginController {
     return null;
   }
 
-  /// 실제 인증 API가 연결되기 전까지는 형식 검증 후 데모 접근을 허용한다.
+  /// 가이드 1.2: POST /mapi/auth/token으로 access/refresh 토큰을 발급받는다.
   Future<LoginResult> submitLogin({
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-
-    return LoginResult(
-      isSuccess: true,
-      message: '$email 계정으로 데모 세션에 진입합니다.',
-      user: AppUser.demo(nickname: 'Sora Demo', email: email),
+    final cleanedEmail = email.trim();
+    final fallbackUser = AppUser(
+      nickname: _nicknameFromEmail(cleanedEmail),
+      loginProvider: 'EMAIL',
+      email: cleanedEmail,
     );
+
+    try {
+      final session = await _bffAuthService.loginWithEmailPassword(
+        email: cleanedEmail,
+        password: password,
+        fallbackUser: fallbackUser,
+      );
+      await _authSessionStore.saveSession(session);
+
+      return LoginResult(
+        isSuccess: true,
+        message: '${session.user.nickname}님, 로그인에 성공했습니다.',
+        user: session.user,
+        session: session,
+      );
+    } on BffAuthException catch (error) {
+      return LoginResult(
+        isSuccess: false,
+        message: _messageForLoginError(error),
+      );
+    } catch (_) {
+      return const LoginResult(
+        isSuccess: false,
+        message: '로그인 중 알 수 없는 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  String _messageForLoginError(BffAuthException error) {
+    final statusCode = error.statusCode;
+    if (statusCode == 401) {
+      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    }
+    if (statusCode == 400) {
+      return '입력값이 올바르지 않습니다. 다시 확인해주세요.';
+    }
+    return error.message;
+  }
+
+  String _nicknameFromEmail(String email) {
+    final prefix = email.split('@').first.trim();
+    return prefix.isEmpty ? '사용자' : prefix;
   }
 }

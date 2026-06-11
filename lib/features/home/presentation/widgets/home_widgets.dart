@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -470,15 +471,25 @@ class QuestionInputPanel extends StatelessWidget {
                     minHeight: 52,
                     maxHeight: 94,
                   ),
-                  child: TextField(
-                    controller: controller,
-                    minLines: 1,
-                    maxLines: 3,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => onSubmit(),
-                    decoration: InputDecoration(
-                      hintText: '무엇이 궁금한가요?',
+                  child: Focus(
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent &&
+                          event.logicalKey == LogicalKeyboardKey.enter &&
+                          !HardwareKeyboard.instance.isShiftPressed) {
+                        onSubmit();
+                        return KeyEventResult.handled;
+                      }
+                      return KeyEventResult.ignored;
+                    },
+                    child: TextField(
+                      controller: controller,
+                      minLines: 1,
+                      maxLines: 3,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => onSubmit(),
+                      decoration: InputDecoration(
+                        hintText: '무엇이 궁금한가요?',
                       prefixIcon: const Icon(Icons.edit_note_rounded, size: 22),
                       prefixIconConstraints: const BoxConstraints(
                         minWidth: 42,
@@ -506,6 +517,7 @@ class QuestionInputPanel extends StatelessWidget {
                           width: 1.8,
                         ),
                       ),
+                    ),
                     ),
                   ),
                 ),

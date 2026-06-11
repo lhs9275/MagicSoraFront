@@ -248,6 +248,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     showQuestionHistoryActionSheet(
       context,
       entry,
+      debateApiService: _debateApiService,
       onDelete: entry.debateId == null ? null : _confirmDeleteDebate,
     );
   }
@@ -318,6 +319,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.coral),
               child: const Text('삭제'),
             ),
           ],
@@ -371,6 +373,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.coral),
               child: const Text('삭제'),
             ),
           ],
@@ -404,6 +407,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.coral),
               child: const Text('전체 삭제'),
             ),
           ],
@@ -656,6 +660,7 @@ class _QuestionSearchBox extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onChanged,
+              onSubmitted: onChanged,
               textInputAction: TextInputAction.search,
               textAlignVertical: TextAlignVertical.center,
               decoration: const InputDecoration(

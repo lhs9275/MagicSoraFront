@@ -219,7 +219,11 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   }
 
   void _openQuestionFromHistory(QuestionHistoryEntry entry) {
-    showQuestionHistoryActionSheet(context, entry);
+    showQuestionHistoryActionSheet(
+      context,
+      entry,
+      debateApiService: _debateApiService,
+    );
   }
 
   @override

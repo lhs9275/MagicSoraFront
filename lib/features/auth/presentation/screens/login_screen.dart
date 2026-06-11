@@ -237,6 +237,6 @@ class _LoginWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BrandWordmark(fontSize: isTight ? 27 : 32);
+    return BrandWordmark(fontSize: isTight ? 48 : 60);
   }
 }

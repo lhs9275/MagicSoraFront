@@ -104,7 +104,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('계정정보'), findsOneWidget);
-    expect(find.text('Sora Demo'), findsOneWidget);
+    // 닉네임은 프로필 헤더 카드와 '닉네임 설정' 메뉴 서브타이틀 두 곳에 노출된다.
+    expect(find.text('Sora Demo'), findsNWidgets(2));
     expect(find.text('demo@magicsora.app'), findsWidgets);
 
     await tester.ensureVisible(find.text('로그아웃'));
@@ -153,7 +154,7 @@ void main() {
     expect(find.text('아직 저장된 질문 기록이 없습니다.'), findsOneWidget);
   });
 
-  testWidgets('질문 기록 항목에서 이전 답변 보기 액션을 열 수 있다', (tester) async {
+  testWidgets('질문 기록 항목 시트는 이어서 질문하기 단일 액션만 노출한다', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(() {
@@ -172,14 +173,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('이전 답변 보기'), findsOneWidget);
     expect(find.text('이어서 질문하기'), findsOneWidget);
-
-    await tester.tap(find.text('이전 답변 보기'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-
-    expect(find.text('이전에 받은 답변'), findsOneWidget);
+    expect(find.text('이전 답변 보기'), findsNothing);
   });
 
   testWidgets('질문 기록 항목에서 이어서 질문하기를 시작할 수 있다', (tester) async {

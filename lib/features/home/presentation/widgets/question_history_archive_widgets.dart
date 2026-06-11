@@ -119,14 +119,7 @@ String _companionName(String? ownerNickname) {
   if (trimmed.isEmpty) {
     return '소라와';
   }
-
-  final lastRune = trimmed.runes.last;
-  if (lastRune >= 0xAC00 && lastRune <= 0xD7A3) {
-    final hasBatchim = (lastRune - 0xAC00) % 28 != 0;
-    return '$trimmed${hasBatchim ? '과' : '와'}';
-  }
-
-  return '$trimmed와';
+  return '$trimmed 님과';
 }
 
 class QuestionHistoryArchiveSectionHeader extends StatelessWidget {

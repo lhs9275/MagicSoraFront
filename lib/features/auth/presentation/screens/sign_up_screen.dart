@@ -14,6 +14,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
   final _signUpController = SignUpController();
@@ -23,6 +24,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
@@ -41,6 +43,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final result = await _signUpController.submitSignUp(
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      name: _nameController.text.trim(),
     );
 
     if (!mounted) {
@@ -130,6 +133,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 autofillHints: const [AutofillHints.email],
                                 autocorrect: false,
                                 validator: _signUpController.validateEmail,
+                              ),
+                              const SizedBox(height: 14),
+                              ShellTextField(
+                                controller: _nameController,
+                                labelText: '이름',
+                                hintText: '서비스에서 표시할 이름',
+                                icon: Icons.badge_outlined,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [AutofillHints.name],
+                                autocorrect: false,
+                                validator: _signUpController.validateName,
                               ),
                               const SizedBox(height: 14),
                               ShellTextField(

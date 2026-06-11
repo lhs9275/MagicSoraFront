@@ -52,6 +52,7 @@ class DebateSummary {
     required this.id,
     required this.topic,
     required this.status,
+    this.category,
     this.finalVerdict,
     this.leadingArgumentId,
     this.totalScore,
@@ -65,6 +66,7 @@ class DebateSummary {
       id: _asInt(json['id']) ?? 0,
       topic: _cleanString(json['topic']) ?? '',
       status: DebateStatus.fromJson(json['status']),
+      category: _cleanString(json['category']),
       finalVerdict: _cleanString(json['finalVerdict']),
       leadingArgumentId: _cleanString(json['leadingArgumentId']),
       totalScore: _asDouble(json['totalScore']),
@@ -77,6 +79,7 @@ class DebateSummary {
   final int id;
   final String topic;
   final DebateStatus status;
+  final String? category;
   final String? finalVerdict;
   final String? leadingArgumentId;
   final double? totalScore;
@@ -91,6 +94,7 @@ class DebateDetail {
     required this.userId,
     required this.topic,
     required this.status,
+    this.category,
     this.finalVerdict,
     this.leadingArgumentId,
     this.totalScore,
@@ -107,6 +111,7 @@ class DebateDetail {
       userId: _asInt(json['userId']) ?? 0,
       topic: _cleanString(json['topic']) ?? '',
       status: DebateStatus.fromJson(json['status']),
+      category: _cleanString(json['category']),
       finalVerdict: _cleanString(json['finalVerdict']),
       leadingArgumentId: _cleanString(json['leadingArgumentId']),
       totalScore: _asDouble(json['totalScore']),
@@ -122,6 +127,7 @@ class DebateDetail {
   final int userId;
   final String topic;
   final DebateStatus status;
+  final String? category;
   final String? finalVerdict;
   final String? leadingArgumentId;
   final double? totalScore;
@@ -156,11 +162,66 @@ class DebateSseEvent {
 
   bool get isFinal => event == 'final';
   bool get isError => event == 'error';
+  bool get isDelta => event == 'delta';
+  bool get isAnswerCompleted => event == 'answer_completed';
   String? get verdict =>
       _cleanString(payload['verdict']) ??
       _cleanString(payload['final_verdict']);
   String? get engineStatus => _cleanString(payload['status']);
   String? get errorCode => _cleanString(payload['code']);
+  String? get deltaText {
+    final raw = payload['text']?.toString();
+    return raw == null || raw.isEmpty ? null : raw;
+  }
+
+  int? get questionId => _asInt(payload['questionId']);
+  String? get answerText => _cleanString(payload['answer']);
+
+  /// 가이드 2.2: final 이벤트는 leading_argument_id / total_score / arguments / payload를 포함.
+  String? get leadingArgumentId =>
+      _cleanString(payload['leading_argument_id']) ??
+      _cleanString(payload['leadingArgumentId']);
+
+  double? get totalScore =>
+      _asDouble(payload['total_score']) ?? _asDouble(payload['totalScore']);
+
+  List<Map<String, dynamic>> get debateArguments {
+    final raw = payload['arguments'];
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw)
+        if (item is Map)
+          item.map((key, value) => MapEntry(key.toString(), value)),
+    ];
+  }
+
+  Map<String, dynamic> get finalPayload =>
+      _asStringKeyedMap(payload['payload']);
+}
+
+class DebateQuestionAnswer {
+  const DebateQuestionAnswer({
+    required this.id,
+    required this.question,
+    required this.answer,
+    this.createdAt,
+  });
+
+  factory DebateQuestionAnswer.fromJson(Map<String, dynamic> json) {
+    return DebateQuestionAnswer(
+      id: _asInt(json['id']) ?? 0,
+      question: _cleanString(json['question']) ?? '',
+      answer: _cleanString(json['answer']) ?? '',
+      createdAt: _asDateTime(json['createdAt']),
+    );
+  }
+
+  final int id;
+  final String question;
+  final String answer;
+  final DateTime? createdAt;
 }
 
 Map<String, dynamic> _decodePayload(String data) {
@@ -218,5 +279,13 @@ DateTime? _asDateTime(Object? value) {
   if (text == null) {
     return null;
   }
-  return DateTime.tryParse(text);
+
+  // 가이드: 모든 시각은 서버(UTC) 기준 ISO-8601.
+  // 'Z' 또는 ±HH:MM 오프셋이 없으면 naive 문자열로 간주해 UTC로 해석한다.
+  final hasTimezone =
+      text.endsWith('Z') ||
+      text.endsWith('z') ||
+      RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(text);
+  final normalized = hasTimezone ? text : '${text}Z';
+  return DateTime.tryParse(normalized);
 }
