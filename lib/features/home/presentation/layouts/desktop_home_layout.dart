@@ -8,6 +8,7 @@ class DesktopHomeLayout extends StatelessWidget {
     required this.questions,
     required this.user,
     required this.questionController,
+    required this.questionFocusNode,
     required this.onSubmitQuestion,
     required this.onOpenAccount,
     required this.onOpenQuestionHistory,
@@ -20,6 +21,7 @@ class DesktopHomeLayout extends StatelessWidget {
   final List<QuestionHistoryEntry> questions;
   final AppUser user;
   final TextEditingController questionController;
+  final FocusNode questionFocusNode;
   final VoidCallback onSubmitQuestion;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenQuestionHistory;
@@ -82,6 +84,7 @@ class DesktopHomeLayout extends StatelessWidget {
                       bottom: 20,
                       child: QuestionInputPanel(
                         controller: questionController,
+                        focusNode: questionFocusNode,
                         onSubmit: onSubmitQuestion,
                       ),
                     ),

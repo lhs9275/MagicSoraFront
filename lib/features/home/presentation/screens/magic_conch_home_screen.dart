@@ -50,6 +50,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   ];
 
   final _questionController = TextEditingController();
+  final _questionFocusNode = FocusNode();
   final _debateApiService = DebateApiService();
   bool _isSubmittingQuestion = false;
   late AppUser _activeUser;
@@ -112,6 +113,13 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
     super.initState();
     _activeUser = widget.user ?? AppUser.fallback;
     _hydrateUser();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _questionFocusNode.unfocus();
+      FocusScope.of(context).unfocus();
+    });
   }
 
   Future<void> _hydrateUser() async {
@@ -130,6 +138,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   @override
   void dispose() {
     _questionController.dispose();
+    _questionFocusNode.dispose();
     super.dispose();
   }
 
@@ -226,32 +235,43 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
     );
   }
 
+  void _dismissKeyboard() {
+    _questionFocusNode.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: OceanShellBackground(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 600) {
-              return MobileHomeLayout(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: _dismissKeyboard,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return MobileHomeLayout(
+                  questionController: _questionController,
+                  questionFocusNode: _questionFocusNode,
+                  onSubmitQuestion: _openResult,
+                  onOpenAccount: _openAccount,
+                  onOpenQuestionHistory: _openQuestionHistory,
+                );
+              }
+
+              return DesktopHomeLayout(
+                questions: _questionHistory,
+                user: _currentUser,
                 questionController: _questionController,
+                questionFocusNode: _questionFocusNode,
                 onSubmitQuestion: _openResult,
                 onOpenAccount: _openAccount,
                 onOpenQuestionHistory: _openQuestionHistory,
+                onOpenQuestionFromHistory: _openQuestionFromHistory,
               );
-            }
-
-            return DesktopHomeLayout(
-              questions: _questionHistory,
-              user: _currentUser,
-              questionController: _questionController,
-              onSubmitQuestion: _openResult,
-              onOpenAccount: _openAccount,
-              onOpenQuestionHistory: _openQuestionHistory,
-              onOpenQuestionFromHistory: _openQuestionFromHistory,
-            );
-          },
+            },
+          ),
         ),
       ),
     );

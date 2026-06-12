@@ -444,11 +444,13 @@ class ConchQuestionPanel extends StatelessWidget {
 class QuestionInputPanel extends StatelessWidget {
   const QuestionInputPanel({
     required this.controller,
+    required this.focusNode,
     required this.onSubmit,
     super.key,
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final VoidCallback onSubmit;
 
   @override
@@ -483,6 +485,8 @@ class QuestionInputPanel extends StatelessWidget {
                     },
                     child: TextField(
                       controller: controller,
+                      focusNode: focusNode,
+                      autofocus: false,
                       minLines: 1,
                       maxLines: 3,
                       keyboardType: TextInputType.multiline,

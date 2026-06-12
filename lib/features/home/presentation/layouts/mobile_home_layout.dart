@@ -5,6 +5,7 @@ import 'package:magicsorafront/features/home/presentation/widgets/home_widgets.d
 class MobileHomeLayout extends StatelessWidget {
   const MobileHomeLayout({
     required this.questionController,
+    required this.questionFocusNode,
     required this.onSubmitQuestion,
     required this.onOpenAccount,
     required this.onOpenQuestionHistory,
@@ -12,6 +13,7 @@ class MobileHomeLayout extends StatelessWidget {
   });
 
   final TextEditingController questionController;
+  final FocusNode questionFocusNode;
   final VoidCallback onSubmitQuestion;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenQuestionHistory;
@@ -117,6 +119,7 @@ class MobileHomeLayout extends StatelessWidget {
               bottom: inputBottom,
               child: QuestionInputPanel(
                 controller: questionController,
+                focusNode: questionFocusNode,
                 onSubmit: onSubmitQuestion,
               ),
             ),
