@@ -54,16 +54,17 @@ class DebateApiService {
   }
 
   Future<int> _startDebateOnce(String topic) async {
-    final response = await _httpClient
-        .post(
-          BffConfig.apiUri('/api/debates'),
-          headers: await _jsonHeaders(),
-          body: jsonEncode({'topic': topic}),
-        )
-        .timeout(const Duration(seconds: 15));
-    final body = _decodeJson(response.bodyBytes);
+    final request = http.Request('POST', BffConfig.apiUri('/api/debates'));
+    request.headers.addAll(await _jsonHeaders());
+    request.bodyBytes = _jsonBodyBytes({'topic': topic});
 
-    if (response.statusCode == 429) {
+    final streamedResponse = await _httpClient
+        .send(request)
+        .timeout(const Duration(seconds: 15));
+    final responseBodyBytes = await streamedResponse.stream.toBytes();
+    final body = _decodeJson(responseBodyBytes);
+
+    if (streamedResponse.statusCode == 429) {
       throw DebateApiException(
         _firstNonEmptyString([body['message'], body['error']]) ??
             '동시에 진행할 수 있는 토론 수를 초과했어요. 진행 중인 토론을 마친 뒤 다시 시도해주세요.',
@@ -71,7 +72,7 @@ class DebateApiService {
       );
     }
 
-    _throwIfFailed(response.statusCode, body, '/api/debates');
+    _throwIfFailed(streamedResponse.statusCode, body, '/api/debates');
 
     final debateId = _asInt(body['debateId']);
     if (debateId == null || debateId < 1) {
@@ -166,11 +167,11 @@ class DebateApiService {
   ) async {
     final path = '/api/debates/$debateId/questions';
     final headers = await _streamHeaders();
-    headers['Content-Type'] = 'application/json';
+    headers['Content-Type'] = 'application/json; charset=utf-8';
 
     final request = http.Request('POST', BffConfig.apiUri(path));
     request.headers.addAll(headers);
-    request.body = jsonEncode({'question': question});
+    request.bodyBytes = _jsonBodyBytes({'question': question});
 
     http.StreamedResponse response;
     try {
@@ -192,6 +193,8 @@ class DebateApiService {
         _messageFromBodyText(
           bodyText,
           fallback: _questionErrorMessage(response.statusCode),
+          statusCode: response.statusCode,
+          fallbackPath: path,
         ),
         statusCode: response.statusCode,
       );
@@ -311,7 +314,7 @@ class DebateApiService {
       'Authorization': 'Bearer ${await _accessToken()}',
     };
     if (contentType) {
-      headers['Content-Type'] = 'application/json';
+      headers['Content-Type'] = 'application/json; charset=utf-8';
     }
     return headers;
   }
@@ -322,6 +325,10 @@ class DebateApiService {
       'Authorization': 'Bearer ${await _accessToken()}',
       'Cache-Control': 'no-cache',
     };
+  }
+
+  Uint8List _jsonBodyBytes(Map<String, Object?> body) {
+    return Uint8List.fromList(utf8.encode(jsonEncode(body)));
   }
 
   Future<http.StreamedResponse> _openDebateStream(String path) async {
@@ -364,6 +371,8 @@ class DebateApiService {
           _messageFromBodyText(
             bodyText,
             fallback: _streamConnectFailureMessage(response.statusCode, path),
+            statusCode: response.statusCode,
+            fallbackPath: path,
           ),
           statusCode: response.statusCode,
         );
@@ -453,17 +462,20 @@ class DebateApiService {
       return;
     }
 
-    final message =
-        _firstNonEmptyString([
-          body['message'],
-          body['error'],
-          body['detail'],
-        ]) ??
-        'BFF 요청에 실패했습니다. status=$statusCode path=$fallbackPath';
+    final message = _failureMessage(
+      statusCode: statusCode,
+      fallbackPath: fallbackPath,
+      rawMessage: _firstNonEmptyString([body['message'], body['error'], body['detail']]),
+    );
     throw DebateApiException(message, statusCode: statusCode);
   }
 
-  String _messageFromBodyText(String bodyText, {required String fallback}) {
+  String _messageFromBodyText(
+    String bodyText, {
+    required String fallback,
+    int? statusCode,
+    String? fallbackPath,
+  }) {
     final raw = bodyText.trim();
     if (raw.isEmpty) {
       return fallback;
@@ -472,18 +484,67 @@ class DebateApiService {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
-        return _firstNonEmptyString([
-              decoded['message'],
-              decoded['error'],
-              decoded['detail'],
-            ]) ??
-            fallback;
+        return _failureMessage(
+          statusCode: statusCode,
+          fallbackPath: fallbackPath,
+          rawMessage: _firstNonEmptyString([
+            decoded['message'],
+            decoded['error'],
+            decoded['detail'],
+          ]),
+          fallback: fallback,
+        );
       }
     } on FormatException {
-      return raw;
+      return _failureMessage(
+        statusCode: statusCode,
+        fallbackPath: fallbackPath,
+        rawMessage: raw,
+        fallback: fallback,
+      );
     }
 
     return fallback;
+  }
+
+  String _failureMessage({
+    required int? statusCode,
+    required String? fallbackPath,
+    required String? rawMessage,
+    String? fallback,
+  }) {
+    final normalizedRaw = rawMessage?.trim() ?? '';
+    if (normalizedRaw.isNotEmpty) {
+      if (_isRejectedMessage(normalizedRaw)) {
+        return _rejectedMessageForPath(fallbackPath);
+      }
+      return normalizedRaw;
+    }
+
+    if (fallback != null && fallback.isNotEmpty) {
+      return fallback;
+    }
+
+    return 'BFF 요청에 실패했습니다. status=$statusCode path=$fallbackPath';
+  }
+
+  bool _isRejectedMessage(String message) {
+    final normalized = message.trim().toLowerCase();
+    return normalized == 'rejected' ||
+        normalized == 'input_rejected' ||
+        normalized == 'prompt_rejected' ||
+        normalized == 'request_rejected' ||
+        normalized == 'content_rejected';
+  }
+
+  String _rejectedMessageForPath(String? path) {
+    if (path == '/api/debates') {
+      return '질문이 서버에서 거부되었습니다. 표현을 조금 바꿔 다시 시도해주세요.';
+    }
+    if (path != null && path.contains('/questions')) {
+      return '추가 질문이 서버에서 거부되었습니다. 표현을 조금 바꿔 다시 시도해주세요.';
+    }
+    return '요청이 서버에서 거부되었습니다. 표현을 조금 바꿔 다시 시도해주세요.';
   }
 
   bool _shouldRetryStreamStatusCode(int statusCode) {

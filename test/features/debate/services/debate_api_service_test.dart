@@ -40,8 +40,14 @@ void main() {
           expect(request.method, 'POST');
           expect(request.url, Uri.parse('https://bff.noctide.dev/api/debates'));
           expect(request.headers['Authorization'], 'Bearer bff-access');
-          expect(request.headers['Content-Type'], 'application/json');
-          expect(jsonDecode(request.body), {'topic': 'AI 토론'});
+          expect(
+            request.headers['Content-Type'],
+            'application/json; charset=utf-8',
+          );
+          expect(
+            jsonDecode(utf8.decode((request as http.Request).bodyBytes)),
+            {'topic': 'AI 토론'},
+          );
 
           return http.Response(
             jsonEncode({'debateId': 42}),
@@ -52,6 +58,26 @@ void main() {
       );
 
       await expectLater(service.startDebate('AI 토론'), completion(42));
+    });
+
+    test('토론 생성 요청은 한글 topic을 UTF-8로 인코딩한다', () async {
+      await saveSession();
+
+      final service = DebateApiService(
+        httpClient: MockClient((request) async {
+          expect(
+            utf8.decode((request as http.Request).bodyBytes),
+            '{"topic":"한글 토론"}',
+          );
+          return http.Response(
+            jsonEncode({'debateId': 7}),
+            202,
+            headers: {'Content-Type': 'application/json'},
+          );
+        }),
+      );
+
+      await expectLater(service.startDebate('한글 토론'), completion(7));
     });
 
     test('SSE 스트림을 이벤트 단위로 파싱한다', () async {
@@ -186,7 +212,7 @@ void main() {
           );
           expect(
             request.headers['Content-Type'],
-            contains('application/json'),
+            'application/json; charset=utf-8',
           );
 
           final bodyBytes = await bodyStream
@@ -250,6 +276,31 @@ void main() {
                 'message',
                 'debate not finished',
               ),
+        ),
+      );
+    });
+
+    test('추가 질문 rejected 응답은 사용자용 메시지로 변환한다', () async {
+      await saveSession();
+
+      final service = DebateApiService(
+        httpClient: MockClient.streaming((request, bodyStream) async {
+          return http.StreamedResponse(
+            Stream<List<int>>.fromIterable([utf8.encode('{"error":"rejected"}')]),
+            400,
+            headers: {'Content-Type': 'application/json'},
+          );
+        }),
+      );
+
+      await expectLater(
+        service.askQuestion(42, '추가 질문').toList(),
+        throwsA(
+          isA<DebateApiException>().having(
+            (error) => error.message,
+            'message',
+            '추가 질문이 서버에서 거부되었습니다. 표현을 조금 바꿔 다시 시도해주세요.',
+          ),
         ),
       );
     });
@@ -383,6 +434,31 @@ void main() {
       );
       expect(startAttempt, 1);
       expect(refreshAttempt, 1);
+    });
+
+    test('토론 생성 rejected 응답은 사용자용 메시지로 변환한다', () async {
+      await saveSession();
+
+      final service = DebateApiService(
+        httpClient: MockClient((request) async {
+          return http.Response(
+            jsonEncode({'message': 'rejected'}),
+            400,
+            headers: {'Content-Type': 'application/json'},
+          );
+        }),
+      );
+
+      await expectLater(
+        service.startDebate('나는 사람이다'),
+        throwsA(
+          isA<DebateApiException>().having(
+            (error) => error.message,
+            'message',
+            '질문이 서버에서 거부되었습니다. 표현을 조금 바꿔 다시 시도해주세요.',
+          ),
+        ),
+      );
     });
 
     test('토론 목록에서 finalVerdict와 커서를 매핑한다', () async {
