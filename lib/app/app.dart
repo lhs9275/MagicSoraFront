@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/text_scale_scope.dart';
+import 'package:magicsorafront/features/auth/widgets/token_auto_refresh_scope.dart';
 import 'package:magicsorafront/features/home/presentation/screens/magic_conch_home_screen.dart';
 import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
 
@@ -17,6 +19,13 @@ class DebateApp extends StatelessWidget {
       title: 'Magic Sora Debate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      builder: (context, child) {
+        return TokenAutoRefreshScope(
+          child: TextScaleScope(
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
       home: _kDebugSkipLogin
           ? const MagicConchHomeScreen()
           : const MainMenuScreen(),

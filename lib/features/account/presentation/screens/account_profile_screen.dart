@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
+import 'package:magicsorafront/features/account/presentation/screens/app_info_screen.dart';
+import 'package:magicsorafront/features/account/presentation/screens/help_screen.dart';
+import 'package:magicsorafront/features/account/presentation/screens/notification_settings_screen.dart';
+import 'package:magicsorafront/features/account/presentation/screens/text_scale_settings_screen.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu_screen.dart';
@@ -58,6 +62,38 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('$label은 아직 준비 중입니다.')));
+  }
+
+  void _handleMenuTap(BuildContext context, String label) {
+    if (label == '도움말') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const HelpScreen()),
+      );
+      return;
+    }
+    if (label == '알림 설정') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const NotificationSettingsScreen(),
+        ),
+      );
+      return;
+    }
+    if (label == '글자 크기') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const TextScaleSettingsScreen(),
+        ),
+      );
+      return;
+    }
+    if (label == '앱 정보') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const AppInfoScreen()),
+      );
+      return;
+    }
+    _showComingSoon(context, label);
   }
 
   Future<void> _openNicknameSetting() async {
@@ -139,12 +175,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                       _ProfileMenuSection(
                         currentNickname: _user.nickname,
                         onNicknameTap: _openNicknameSetting,
-                        onMenuTap: (label) => _showComingSoon(context, label),
+                        onMenuTap: (label) => _handleMenuTap(context, label),
                       ),
                       const SizedBox(height: 16),
                       _LogoutButton(onPressed: () => _handleLogout(context)),
                       const SizedBox(height: 16),
-                      const _AppVersionFootnote(version: 'v1.0'),
+                      const _AppVersionFootnote(version: 'v1.0.0'),
                     ],
                   ),
                 ),
@@ -463,13 +499,6 @@ class _ProfileMenuSection extends StatelessWidget {
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
-            icon: Icons.tune_rounded,
-            title: '평가 기준',
-            subtitle: '가중치 조정',
-            onTap: () => onMenuTap('평가 기준'),
-          ),
-          const _MenuDivider(),
-          _ProfileMenuTile(
             icon: Icons.notifications_none_rounded,
             title: '알림 설정',
             subtitle: '도착 방식 관리',
@@ -477,10 +506,24 @@ class _ProfileMenuSection extends StatelessWidget {
           ),
           const _MenuDivider(),
           _ProfileMenuTile(
+            icon: Icons.text_fields_rounded,
+            title: '글자 크기',
+            subtitle: '읽기 편한 크기로',
+            onTap: () => onMenuTap('글자 크기'),
+          ),
+          const _MenuDivider(),
+          _ProfileMenuTile(
             icon: Icons.help_outline_rounded,
             title: '도움말',
             subtitle: '사용법 확인',
             onTap: () => onMenuTap('도움말'),
+          ),
+          const _MenuDivider(),
+          _ProfileMenuTile(
+            icon: Icons.info_outline_rounded,
+            title: '앱 정보',
+            subtitle: '버전 · 약관 · 라이선스',
+            onTap: () => onMenuTap('앱 정보'),
           ),
         ],
       ),

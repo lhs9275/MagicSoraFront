@@ -17,6 +17,7 @@ class BffAuthService {
 
   final http.Client _httpClient;
   final AuthSessionStore _sessionStore;
+  Future<AuthSession?>? _inflightRefresh;
 
   Future<AuthSession> exchangeKakaoAccessToken({
     required String kakaoAccessToken,
@@ -128,7 +129,20 @@ class BffAuthService {
 
   /// 가이드 1.2: 만료 시 POST /mapi/auth/refresh로 access token 갱신.
   /// 성공 시 새 세션을 저장하고 반환. 실패 시 null.
-  Future<AuthSession?> refreshSession() async {
+  /// 동시 호출이 들어와도 single-flight 로 중복 요청을 막는다.
+  Future<AuthSession?> refreshSession() {
+    final pending = _inflightRefresh;
+    if (pending != null) {
+      return pending;
+    }
+    final future = _refreshSessionInternal();
+    _inflightRefresh = future;
+    return future.whenComplete(() {
+      _inflightRefresh = null;
+    });
+  }
+
+  Future<AuthSession?> _refreshSessionInternal() async {
     final session = await _sessionStore.loadSession();
     final refreshToken = session?.refreshToken?.trim() ?? '';
     if (session == null || refreshToken.isEmpty) {
