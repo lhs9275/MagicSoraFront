@@ -90,21 +90,7 @@ class KakaoAuthController {
   }
 
   Future<OAuthToken> _login() async {
-    final isTalkAvailable = await isKakaoTalkInstalled();
-
-    if (!isTalkAvailable) {
-      return UserApi.instance.loginWithKakaoAccount();
-    }
-
-    try {
-      return await UserApi.instance.loginWithKakaoTalk();
-    } catch (error) {
-      if (_isUserCancelled(error)) {
-        rethrow;
-      }
-
-      return UserApi.instance.loginWithKakaoAccount();
-    }
+    return UserApi.instance.loginWithKakaoAccount();
   }
 
   bool _isUserCancelled(Object error) {
