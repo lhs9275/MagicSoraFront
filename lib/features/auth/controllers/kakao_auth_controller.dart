@@ -40,7 +40,9 @@ class KakaoAuthController {
         user: session.user,
         session: session,
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      debugPrint('[Kakao] login failed: ${error.runtimeType} -> $error');
+      debugPrint('$stackTrace');
       return LoginResult(isSuccess: false, message: _messageFor(error));
     }
   }
@@ -82,7 +84,25 @@ class KakaoAuthController {
   }
 
   Future<OAuthToken> _login() async {
-    return UserApi.instance.loginWithKakaoAccount();
+    if (kIsWeb) {
+      return UserApi.instance.loginWithKakaoAccount();
+    }
+
+    final isTalkAvailable = await isKakaoTalkInstalled();
+
+    if (!isTalkAvailable) {
+      return UserApi.instance.loginWithKakaoAccount();
+    }
+
+    try {
+      return await UserApi.instance.loginWithKakaoTalk();
+    } catch (error) {
+      if (_isUserCancelled(error)) {
+        rethrow;
+      }
+
+      return UserApi.instance.loginWithKakaoAccount();
+    }
   }
 
   bool _isUserCancelled(Object error) {
@@ -100,6 +120,10 @@ class KakaoAuthController {
     }
 
     if (error is KakaoException) {
+      final detail = error.message?.trim() ?? '';
+      if (detail.isNotEmpty) {
+        return '카카오 로그인에 실패했습니다. $detail';
+      }
       return '카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
     }
 

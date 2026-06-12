@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:magicsorafront/app/app.dart';
@@ -16,7 +17,15 @@ Future<void> main() async {
       javaScriptAppKey: KakaoConfig.javaScriptAppKey.isEmpty
           ? null
           : KakaoConfig.javaScriptAppKey,
+      loggingEnabled: true,
     );
+    debugPrint(
+      '[Kakao] init: nativeAppKey=${KakaoConfig.nativeAppKey.isNotEmpty}, '
+      'javaScriptAppKey=${KakaoConfig.javaScriptAppKey.isNotEmpty} '
+      '(len=${KakaoConfig.javaScriptAppKey.length})',
+    );
+  } else {
+    debugPrint('[Kakao] init skipped: no app keys provided');
   }
 
   runApp(const DebateApp());

@@ -239,6 +239,10 @@ class BffAuthService {
       throw const BffAuthException(
         'BFF 주소 형식이 잘못되었습니다. BFF_BASE_URL 값을 확인해주세요.',
       );
+    } on http.ClientException catch (error) {
+      throw BffAuthException(
+        'BFF 요청이 브라우저에서 차단되었습니다 (CORS 또는 네트워크). ${error.message}',
+      );
     }
   }
 

@@ -70,8 +70,9 @@ android {
         }
         release {
             // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Signing with the shared debug keystore so the Kakao key hash stays
+            // consistent across machines and `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("sharedDebug")
         }
     }
 }

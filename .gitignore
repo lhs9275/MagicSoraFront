@@ -46,3 +46,6 @@ app.*.map.json
 
 # Local Kakao SDK keys
 /ios/Flutter/KakaoKeys.xcconfig
+
+# Local --dart-define-from-file env (committed example is .env.example)
+/.env
