@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-import 'package:magicsorafront/core/config/kakao_config.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/login_result.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
@@ -17,13 +16,6 @@ class KakaoAuthController {
   final BffAuthService _bffAuthService;
 
   Future<LoginResult> submitKakaoLogin() async {
-    if (!KakaoConfig.hasNativeAppKey) {
-      return const LoginResult(
-        isSuccess: false,
-        message: '카카오 네이티브 앱 키를 설정한 뒤 다시 시도해주세요.',
-      );
-    }
-
     try {
       final token = await _login();
       if (token.accessToken.isEmpty) {
