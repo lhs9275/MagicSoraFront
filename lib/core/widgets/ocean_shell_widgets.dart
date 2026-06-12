@@ -10,6 +10,11 @@ class OceanShellBackground extends StatelessWidget {
     this.useSafeArea = true,
   });
 
+  /// PC 폭에서 모바일 레이아웃을 가운데 모바일 형태로 고정할 때 쓰는 폭.
+  /// 배경(그라데이션 + 백드롭)은 항상 풀스크린으로 그린다.
+  static const double _mobileFrameBreakpoint = 600;
+  static const double _mobileFrameWidth = 480;
+
   final Widget child;
   final bool useSafeArea;
 
@@ -37,7 +42,22 @@ class OceanShellBackground extends StatelessWidget {
       child: Stack(
         children: [
           const Positioned.fill(child: _ModernOceanBackdrop()),
-          Positioned.fill(child: content),
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < _mobileFrameBreakpoint) {
+                  return content;
+                }
+                return Center(
+                  child: SizedBox(
+                    width: _mobileFrameWidth,
+                    height: constraints.maxHeight,
+                    child: content,
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
