@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
@@ -145,9 +146,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   Future<void> _openResult() async {
     final trimmedQuestion = _questionController.text.trim();
     if (trimmedQuestion.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('질문을 입력해주세요.')));
+      showAppSnackBar(context, '질문을 입력해주세요.');
       return;
     }
 
@@ -172,9 +171,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
       final message = error is DebateApiException
           ? error.message
           : '토론을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      showAppSnackBar(context, message);
     } finally {
       if (mounted) {
         setState(() {

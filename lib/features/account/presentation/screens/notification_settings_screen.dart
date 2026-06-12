@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/account/services/notification_preferences.dart';
 
@@ -50,77 +51,56 @@ class _NotificationSettingsScreenState
   }
 
   Future<void> _updateDebateCompleted(bool value) async {
-    final current = _values;
-    if (current == null) {
+    if (_values == null) {
       return;
     }
     if (value) {
+      // 켜는 동작은 안내 메시지만 보여주고 즉시 꺼진 상태로 되돌린다.
+      // 토글이 잠깐 ON 으로 보였다가 다시 OFF 로 떨어지면서 안내가 떠야
+      // 사용자가 "켤 수 없다"는 점을 시각적으로도 알아챌 수 있다.
       _showInAppOnlyNotice();
-      _scheduleAutoRevert(
-        setter: (next) async {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _values = _values?.copyWith(debateCompleted: next);
-          });
-          await _preferences.setDebateCompleted(next);
-        },
-      );
-    }
-    setState(() {
-      _values = current.copyWith(debateCompleted: value);
-    });
-    await _preferences.setDebateCompleted(value);
-  }
-
-  Future<void> _updateFollowUpAnswered(bool value) async {
-    final current = _values;
-    if (current == null) {
-      return;
-    }
-    if (value) {
-      _showInAppOnlyNotice();
-      _scheduleAutoRevert(
-        setter: (next) async {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _values = _values?.copyWith(followUpAnswered: next);
-          });
-          await _preferences.setFollowUpAnswered(next);
-        },
-      );
-    }
-    setState(() {
-      _values = current.copyWith(followUpAnswered: value);
-    });
-    await _preferences.setFollowUpAnswered(value);
-  }
-
-  void _scheduleAutoRevert({
-    required Future<void> Function(bool next) setter,
-  }) {
-    Future.delayed(const Duration(milliseconds: 1200), () {
+      setState(() {
+        _values = _values!.copyWith(debateCompleted: true);
+      });
+      await Future.delayed(const Duration(milliseconds: 200));
       if (!mounted) {
         return;
       }
-      unawaited(setter(false));
+    }
+    setState(() {
+      _values = _values!.copyWith(debateCompleted: false);
     });
+    await _preferences.setDebateCompleted(false);
+  }
+
+  Future<void> _updateFollowUpAnswered(bool value) async {
+    if (_values == null) {
+      return;
+    }
+    if (value) {
+      _showInAppOnlyNotice();
+      setState(() {
+        _values = _values!.copyWith(followUpAnswered: true);
+      });
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (!mounted) {
+        return;
+      }
+    }
+    setState(() {
+      _values = _values!.copyWith(followUpAnswered: false);
+    });
+    await _preferences.setFollowUpAnswered(false);
   }
 
   void _showInAppOnlyNotice() {
     if (!mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('앱에서만 알림을 켜고 끌 수 있어요.'),
-        duration: Duration(seconds: 2),
-      ),
+    showAppSnackBar(
+      context,
+      '앱에서만 알림을 켜고 끌 수 있어요.',
+      duration: const Duration(seconds: 2),
     );
   }
 

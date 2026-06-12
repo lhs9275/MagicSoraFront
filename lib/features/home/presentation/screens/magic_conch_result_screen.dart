@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/debate/models/debate_models.dart';
 import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
@@ -277,9 +278,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       final message = error is DebateApiException
           ? error.message
           : '토론을 취소하지 못했습니다.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      showAppSnackBar(context, message);
     }
   }
 
@@ -326,16 +325,12 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
     }
 
     if (followUpQuestion.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('추가 질문을 입력해주세요.')));
+      showAppSnackBar(context, '추가 질문을 입력해주세요.');
       return;
     }
 
     if (followUpQuestion.length > 500) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('추가 질문은 500자 이하로 입력해주세요.')));
+      showAppSnackBar(context, '추가 질문은 500자 이하로 입력해주세요.');
       return;
     }
 
@@ -415,9 +410,7 @@ class _MagicConchResultScreenState extends State<MagicConchResultScreen> {
       final message = error is DebateApiException
           ? error.message
           : '추가 질문을 시작하지 못했습니다.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      showAppSnackBar(context, message);
       setState(() {
         _isSubmittingFollowUp = false;
       });

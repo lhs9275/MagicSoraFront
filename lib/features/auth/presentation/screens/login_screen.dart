@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/navigation/app_page_routes.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/brand_wordmark.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/controllers/login_controller.dart';
@@ -53,9 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isSubmitting = false;
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(result.message)));
+    showAppSnackBar(context, result.message);
 
     if (!result.isSuccess) {
       return;

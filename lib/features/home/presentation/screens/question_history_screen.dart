@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/debate/models/debate_models.dart';
 import 'package:magicsorafront/features/debate/services/debate_api_service.dart';
@@ -436,9 +437,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
       setState(() {
         _removeDeletedDebateIds({debateId});
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('질문 기록을 삭제했습니다.')));
+      showAppSnackBar(context, '질문 기록을 삭제했습니다.');
     } catch (error) {
       if (!mounted) {
         return;
@@ -446,9 +445,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
       final message = error is DebateApiException
           ? error.message
           : '질문 기록을 삭제하지 못했습니다.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      showAppSnackBar(context, message);
     }
   }
 
@@ -519,9 +516,7 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
     final message = failedCount == 0
         ? successMessage
         : '일부 질문 기록만 삭제했습니다. 성공 ${deletedIds.length}개, 실패 $failedCount개';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 
   void _removeDeletedDebateIds(Set<int> deletedIds) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/account/presentation/screens/app_info_screen.dart';
 import 'package:magicsorafront/features/account/presentation/screens/help_screen.dart';
@@ -59,9 +60,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
   }
 
   void _showComingSoon(BuildContext context, String label) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$label은 아직 준비 중입니다.')));
+    showAppSnackBar(context, '$label은 아직 준비 중입니다.');
   }
 
   void _handleMenuTap(BuildContext context, String label) {
@@ -120,9 +119,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       _user = updatedUser;
     });
     widget.onUserChanged?.call(updatedUser);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('닉네임을 저장했습니다.')));
+    showAppSnackBar(context, '닉네임을 저장했습니다.');
   }
 
   Future<void> _handleLogout(BuildContext context) async {
