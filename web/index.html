@@ -31,8 +31,190 @@
 
   <title>magicsorafront</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #E1FAF3;
+      color: #174B4D;
+      -webkit-font-smoothing: antialiased;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+        Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR",
+        sans-serif;
+    }
+
+    /* OceanShellBackground 7-stop gradient */
+    #boot-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      padding: 24px;
+      box-sizing: border-box;
+      background: linear-gradient(
+        135deg,
+        #E1FAF3 0%,
+        #D7F6EF 48%,
+        #C9F1EA 62%,
+        #BFEDE6 72%,
+        #E4F6E6 80%,
+        #FFF2D2 89%,
+        #FFF8E7 100%
+      );
+      transition: opacity 380ms ease-out;
+    }
+    #boot-splash.bs-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── BrandWordmark (fontSize 56 기준) ── */
+    .bs-wordmark {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bs-eyebrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #167A83;        /* primaryDark */
+      font-size: 23.5px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .bs-eyebrow .bs-sparkle {
+      width: 27px;
+      height: 27px;
+      color: #FFDC5B;        /* accentGold */
+      flex-shrink: 0;
+    }
+    .bs-eyebrow .bs-magic {
+      letter-spacing: 9.87px;
+      padding-left: 9.87px;  /* trailing letter-spacing 보정 */
+    }
+    .bs-sora-wrap {
+      margin-top: 9px;       /* gap * 0.9 */
+      display: inline-flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .bs-sora {
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont,
+        system-ui, sans-serif;
+      font-size: 56px;
+      font-weight: 900;
+      letter-spacing: -2.24px;
+      line-height: 1;
+      background: linear-gradient(135deg, #22B8B7 0%, #C0A0FF 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      -webkit-text-fill-color: transparent;
+              color: transparent;
+      filter: drop-shadow(0 11px 23px rgba(31, 166, 165, 0.18));
+      text-align: center;
+    }
+    .bs-underline {
+      margin-top: 9px;       /* gap * 0.9 */
+      height: 3.9px;
+      border-radius: 3.9px;
+      background: linear-gradient(90deg, #96E5DE 0%, #FF8FCC 100%);
+    }
+
+    /* ── Windows 마법사 스타일 indeterminate progress bar (소라색) ── */
+    .bs-progress {
+      width: 280px;
+      max-width: 80vw;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(31, 74, 104, 0.10);   /* deepNavy tinted track */
+      overflow: hidden;
+      position: relative;
+    }
+    .bs-progress::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 35%;
+      border-radius: 999px;
+      background: #6BD1F0;                   /* skyBlue (소라색) */
+      box-shadow: 0 0 12px rgba(107, 209, 240, 0.55);
+      animation: bs-progress-slide 1600ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes bs-progress-slide {
+      0%   { left: -35%; }
+      100% { left: 100%; }
+    }
+
+    .bs-text {
+      color: #5F7774;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-top: -18px;     /* gap 보정 */
+    }
+
+    @media (max-width: 360px) {
+      .bs-sora { font-size: 46px; letter-spacing: -1.84px; }
+      .bs-eyebrow { font-size: 20px; }
+      .bs-eyebrow .bs-magic { letter-spacing: 8.4px; padding-left: 8.4px; }
+      .bs-eyebrow .bs-sparkle { width: 23px; height: 23px; }
+    }
+  </style>
 </head>
 <body>
+  <div id="boot-splash" role="status" aria-label="앱을 불러오는 중입니다">
+    <div class="bs-wordmark">
+      <div class="bs-eyebrow">
+        <svg class="bs-sparkle" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L15 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/>
+        </svg>
+        <span class="bs-magic">MAGIC</span>
+        <svg class="bs-sparkle" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L15 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/>
+        </svg>
+      </div>
+      <div class="bs-sora-wrap">
+        <div class="bs-sora">Sora</div>
+        <div class="bs-underline"></div>
+      </div>
+    </div>
+
+    <div class="bs-progress"></div>
+
+    <div class="bs-text">불러오는 중…</div>
+  </div>
+
+  <script>
+    (function () {
+      var splash = document.getElementById('boot-splash');
+      if (!splash) return;
+
+      var removed = false;
+      function dismiss() {
+        if (removed) return;
+        removed = true;
+        splash.classList.add('bs-hidden');
+        setTimeout(function () {
+          if (splash && splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+          }
+        }, 420);
+      }
+
+      window.addEventListener('flutter-first-frame', dismiss);
+      setTimeout(dismiss, 12000);
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
