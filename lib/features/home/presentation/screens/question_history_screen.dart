@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
@@ -600,7 +601,9 @@ class _QuestionHistoryScreenState extends State<QuestionHistoryScreen> {
                         onDeleteAll: _confirmDeleteAllDebates,
                       ),
                       const SizedBox(height: 16),
-                      if (totalCount == 0)
+                      if (totalCount == 0 && _isLoading)
+                        const _HistorySkeletonList()
+                      else if (totalCount == 0)
                         _EmptyHistoryState(
                           isLoading: _isLoading,
                           message: _loadErrorMessage,
@@ -1110,4 +1113,86 @@ class _QuestionArchiveEntry {
   final QuestionHistoryEntry entry;
 
   String get question => entry.question;
+}
+
+class _HistorySkeletonList extends StatelessWidget {
+  const _HistorySkeletonList();
+
+  static const int _itemCount = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppTheme.skyBlue.withValues(alpha: 0.18),
+      highlightColor: Colors.white.withValues(alpha: 0.78),
+      period: const Duration(milliseconds: 1400),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < _itemCount; index++) ...[
+            const _HistorySkeletonTile(),
+            if (index != _itemCount - 1) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HistorySkeletonTile extends StatelessWidget {
+  const _HistorySkeletonTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SkeletonBar(width: double.infinity, height: 14),
+                SizedBox(height: 8),
+                _SkeletonBar(width: 180, height: 12),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const _SkeletonBar(width: 28, height: 28, radius: 14),
+          const SizedBox(width: 8),
+          const _SkeletonBar(width: 28, height: 28, radius: 14),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonBar extends StatelessWidget {
+  const _SkeletonBar({
+    required this.width,
+    required this.height,
+    this.radius = 6,
+  });
+
+  final double width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
 }

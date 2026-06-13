@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:magicsorafront/core/widgets/app_boot_splash.dart';
 import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
 import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
@@ -54,6 +55,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   final _questionFocusNode = FocusNode();
   final _debateApiService = DebateApiService();
   bool _isSubmittingQuestion = false;
+  bool _isHydrating = true;
   late AppUser _activeUser;
   AppUser get _currentUser => _activeUser;
 
@@ -124,15 +126,20 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   }
 
   Future<void> _hydrateUser() async {
-    final hydratedUser = await AuthSessionStore.instance.hydrateUser(
-      _activeUser,
-    );
+    // 사용자 hydrate는 보통 SharedPreferences 한 번 읽는 정도라 매우 빠르다.
+    // skeleton이 한 프레임만 깜빡이면 오히려 깜빡임처럼 보이므로
+    // 최소 표시 시간을 두어 자연스럽게 노출한다.
+    final results = await Future.wait([
+      AuthSessionStore.instance.hydrateUser(_activeUser),
+      Future<void>.delayed(const Duration(milliseconds: 600)),
+    ]);
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _activeUser = hydratedUser;
+      _activeUser = results.first as AppUser;
+      _isHydrating = false;
     });
   }
 
@@ -239,6 +246,10 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isHydrating) {
+      return const AppBootSplash(message: '소라고동을 깨우는 중이에요…');
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: OceanShellBackground(

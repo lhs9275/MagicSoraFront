@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/app_snack_bar.dart';
 import 'package:magicsorafront/core/widgets/ocean_shell_widgets.dart';
@@ -394,14 +395,76 @@ class _NotificationLoadingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const OceanPanel(
-      padding: EdgeInsets.symmetric(vertical: 36),
-      child: Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2.4),
+    return OceanPanel(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Shimmer.fromColors(
+        baseColor: _notifLineStrong.withValues(alpha: 0.45),
+        highlightColor: Colors.white.withValues(alpha: 0.85),
+        period: const Duration(milliseconds: 1400),
+        child: Column(
+          children: const [
+            _NotificationSkeletonTile(),
+            _NotificationDivider(),
+            _NotificationSkeletonTile(),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationSkeletonTile extends StatelessWidget {
+  const _NotificationSkeletonTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 43,
+            height: 43,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 140,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 44,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ],
       ),
     );
   }
