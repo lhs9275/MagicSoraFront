@@ -4,6 +4,8 @@ import 'package:magicsorafront/app/app.dart';
 import 'package:magicsorafront/core/config/kakao_config.dart';
 import 'package:magicsorafront/core/theme/app_theme.dart';
 import 'package:magicsorafront/core/widgets/app_boot_splash.dart';
+import 'package:magicsorafront/features/auth/models/auth_session.dart';
+import 'package:magicsorafront/features/auth/services/auth_session_store.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +21,7 @@ class _BootGate extends StatefulWidget {
 
 class _BootGateState extends State<_BootGate> {
   bool _isReady = false;
+  AuthSession? _restoredSession;
 
   @override
   void initState() {
@@ -48,10 +51,22 @@ class _BootGateState extends State<_BootGate> {
       debugPrint('[Kakao] init skipped: no app keys provided');
     }
 
+    AuthSession? restored;
+    try {
+      restored = await AuthSessionStore.instance.loadSession();
+    } catch (error) {
+      debugPrint('[Auth] failed to restore session: $error');
+      restored = null;
+    }
+    if (restored != null && restored.accessToken.trim().isEmpty) {
+      restored = null;
+    }
+
     if (!mounted) {
       return;
     }
     setState(() {
+      _restoredSession = restored;
       _isReady = true;
     });
   }
@@ -59,7 +74,7 @@ class _BootGateState extends State<_BootGate> {
   @override
   Widget build(BuildContext context) {
     if (_isReady) {
-      return const DebateApp();
+      return DebateApp(initialSession: _restoredSession);
     }
 
     return MaterialApp(

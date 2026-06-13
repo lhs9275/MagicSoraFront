@@ -161,10 +161,17 @@ class BffAuthService {
         errorContext: '토큰 갱신',
       );
     } on BffAuthException {
+      // 네트워크/타임아웃 — 세션은 살아있을 수 있으니 그대로 두고 null만 돌려준다.
       return null;
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      // 401/403 은 refresh token 자체가 만료/철회된 상태이므로 더 살릴 수 없다.
+      // 세션을 비워 다음 부팅에서 로그인 화면으로 보낸다.
+      // 5xx 등 일시적 오류에는 세션을 건드리지 않는다.
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await _sessionStore.clear();
+      }
       return null;
     }
 

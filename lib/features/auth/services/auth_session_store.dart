@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:magicsorafront/features/auth/models/app_user.dart';
 import 'package:magicsorafront/features/auth/models/auth_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,11 @@ class AuthSessionStore {
 
   AuthSession? _cachedSession;
 
+  /// 세션이 새로 저장되거나 비워질 때 알림을 받는 listenable.
+  /// 앱 루트에서 이걸 구독해 refresh 실패로 세션이 사라지면 로그인 화면으로 돌려보낸다.
+  final ValueNotifier<AuthSession?> sessionListenable =
+      ValueNotifier<AuthSession?>(null);
+
   AuthSession? get currentSession => _cachedSession;
   String? get accessToken => _cachedSession?.accessToken;
 
@@ -21,6 +27,7 @@ class AuthSessionStore {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(_sessionKey, jsonEncode(session.toJson()));
     _cachedSession = session;
+    sessionListenable.value = session;
   }
 
   Future<AuthSession?> loadSession() async {
@@ -34,15 +41,31 @@ class AuthSessionStore {
       return null;
     }
 
-    final decoded = jsonDecode(rawSession);
-    if (decoded is! Map) {
+    AuthSession session;
+    try {
+      final decoded = jsonDecode(rawSession);
+      if (decoded is! Map) {
+        await preferences.remove(_sessionKey);
+        return null;
+      }
+      session = AuthSession.fromJson(
+        decoded.map((key, value) => MapEntry(key.toString(), value)),
+      );
+    } catch (_) {
+      // 저장된 JSON 이 깨졌다 — 다음 부팅에서 또 시도하지 않도록 비워둔다.
+      await preferences.remove(_sessionKey);
       return null;
     }
 
-    final session = AuthSession.fromJson(
-      decoded.map((key, value) => MapEntry(key.toString(), value)),
-    );
+    // accessToken 이 비어있는 세션은 의미가 없다. 절반만 저장됐거나 손상된 상태이니
+    // listenable 을 오염시키지 않고 디스크에서도 지운다.
+    if (session.accessToken.trim().isEmpty) {
+      await preferences.remove(_sessionKey);
+      return null;
+    }
+
     _cachedSession = session;
+    sessionListenable.value = session;
     return session;
   }
 
@@ -85,5 +108,6 @@ class AuthSessionStore {
     await preferences.remove(_sessionKey);
     await preferences.remove(_nicknameKey);
     _cachedSession = null;
+    sessionListenable.value = null;
   }
 }

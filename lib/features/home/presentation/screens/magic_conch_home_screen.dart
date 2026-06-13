@@ -55,7 +55,7 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   final _questionFocusNode = FocusNode();
   final _debateApiService = DebateApiService();
   bool _isSubmittingQuestion = false;
-  bool _isHydrating = true;
+  late bool _isHydrating;
   late AppUser _activeUser;
   AppUser get _currentUser => _activeUser;
 
@@ -115,7 +115,11 @@ class _MagicConchHomeScreenState extends State<MagicConchHomeScreen> {
   void initState() {
     super.initState();
     _activeUser = widget.user ?? AppUser.fallback;
-    _hydrateUser();
+    // 부팅 게이트에서 이미 user 가 주입됐다면 skeleton 을 한 프레임도 띄우지 않는다.
+    _isHydrating = widget.user == null;
+    if (_isHydrating) {
+      _hydrateUser();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
