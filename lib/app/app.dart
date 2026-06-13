@@ -7,7 +7,7 @@ import 'package:magicsorafront/features/main_menu/presentation/screens/main_menu
 
 // 인증 서버가 붙지 않을 때 홈으로 바로 떨어지게 하는 디버그 플래그.
 // 실제 로그인 흐름을 다시 쓰려면 false 로 둔다.
-const bool _kDebugSkipLogin = true;
+const bool _kDebugSkipLogin = false;
 
 /// 앱 전역 테마와 첫 진입 화면을 정의하는 최상위 위젯이다.
 class DebateApp extends StatelessWidget {
